@@ -1,0 +1,5 @@
+# Overlay root copied into 2009Scape Server/src/main/
+# AMP / local scripts rsync this path onto the server source tree.
+overlay_root=src/main
+target_under_server=src/main
+package_prefix=content.amilious

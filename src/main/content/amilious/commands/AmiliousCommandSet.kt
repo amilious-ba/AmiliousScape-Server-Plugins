@@ -1,6 +1,5 @@
 package content.amilious.commands
 
-import core.api.notify
 import core.game.node.entity.player.info.Rights
 import core.game.system.command.Privilege
 import core.game.system.command.sets.CommandSet

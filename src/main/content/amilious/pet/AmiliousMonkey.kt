@@ -18,9 +18,10 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     fun spawnAtOwner() {
         location = owner.location.transform(1, 0, 0)
         init()
+        name = "Gigos"
         isWalks = true
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
-        sendMessage(owner, "Your monkey hops down beside you.")
+        sendMessage(owner, "Gigos hops down beside you.")
         followOwner()
     }
 
@@ -33,7 +34,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         bag.clear()
         owner.removeAttribute(MonkeyConfig.ATTR_ACTIVE)
         clear()
-        sendMessage(owner, "Your monkey scurries off. ::monkey to call him back.")
+        sendMessage(owner, "Gigos scurries off. ::monkey to call him back.")
     }
 
     fun tickCompanion() {
@@ -80,6 +81,6 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         val hit = 1 + (Math.random() * MonkeyConfig.DUNG_MAX_HIT).toInt()
         victim.impactHandler.manualHit(this, hit, ImpactHandler.HitsplatType.NORMAL)
         victim.properties.combatPulse.attack(this)
-        sendMessage(owner, "Your monkey flings something foul. ${victim.name} looks furious.")
+        sendMessage(owner, "Gigos flings something foul. ${victim.name} looks furious.")
     }
 }

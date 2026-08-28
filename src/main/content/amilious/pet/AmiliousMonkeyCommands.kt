@@ -13,7 +13,7 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
     override fun defineCommands() {
         define("monkey", Privilege.STANDARD, "::monkey", "Summon or dismiss your monkey.") { player, _ ->
             if (!owns(player)) {
-                reject(player, "This monkey only answers to its owner.")
+                reject(player, "Gigos only answers to its owner.")
             }
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
             if (live != null) {
@@ -55,7 +55,7 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
             }
             setAttribute(target!!, MonkeyConfig.ATTR_OWNED, true)
             notify(player, "Granted monkey to ${target.username}.")
-            notify(target, "A monkey has taken a liking to you. Type ::monkey")
+            notify(target, "Gigos has taken a liking to you. Type ::monkey")
         }
     }
 

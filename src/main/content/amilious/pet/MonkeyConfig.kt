@@ -1,6 +1,7 @@
 package content.amilious.pet
 
 object MonkeyConfig {
+    // lowercase in-game name with underscores
     val OWNERS = setOf("wolfy")
 
     const val NPC_ID = 6943

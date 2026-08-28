@@ -8,7 +8,7 @@ import core.plugin.Initializable
 class AmiliousMonkeyTicker : TickListener {
     override fun tick() {
         for (player in Repository.players) {
-            val monkey = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE) ?: continue
+            val monkey = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null) ?: continue
             monkey.tickCompanion()
         }
     }

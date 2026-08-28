@@ -6,9 +6,7 @@ import core.game.interaction.MovementPulse
 import core.game.node.entity.combat.ImpactHandler
 import core.game.node.entity.npc.NPC
 import core.game.node.entity.player.Player
-import core.game.node.item.GroundItem
 import core.game.node.item.GroundItemManager
-import core.game.node.item.Item
 import core.game.world.map.RegionManager
 import core.game.world.update.flag.context.Graphics
 
@@ -63,7 +61,16 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
 
     private fun tryDung() {
         if (dungWait > 0) return
-        val victim = owner.properties.combatPulse?.victim ?: return
+        if (!owner.properties.combatPulse.isAttacking) return
+
+        val victim = RegionManager.getLocalNpcs(owner, 8)
+            .firstOrNull {
+                it !== this &&
+                        it.isActive &&
+                        !it.isInvisible &&
+                        it.properties.combatPulse.isAttacking
+            } ?: return
+
         if (victim === owner || victim === this) return
         if (location.getDistance(victim.location) > 8) return
 

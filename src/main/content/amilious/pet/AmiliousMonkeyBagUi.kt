@@ -1,6 +1,7 @@
 package content.amilious.pet
 
 import core.api.sendMessage
+import core.game.container.Container
 import core.game.interaction.InterfaceListener
 import core.game.node.item.Item
 import core.plugin.Initializable
@@ -11,7 +12,6 @@ class AmiliousMonkeyBagUi : InterfaceListener {
 
     override fun defineInterfaceListeners() {
         on(665, 0) { player, _, opcode, _, slot, _ ->
-            sendMessage(player, "store opcode=$opcode slot=$slot")
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
                 ?: return@on true
             val invItem = player.inventory.get(slot) ?: return@on true
@@ -21,12 +21,10 @@ class AmiliousMonkeyBagUi : InterfaceListener {
                 sendMessage(player, "Store-X not wired yet. Use Store-1/5/10/All.")
                 return@on true
             }
-            val move = Item(invItem.id, min(want, invItem.amount))
-            if (!live.bag.hasSpaceFor(move)) {
+            val moved = transfer(player.inventory, live.bag, invItem.id, want)
+            if (moved == 0) {
                 sendMessage(player, "Gigos cannot carry any more.")
-                return@on true
-            }
-            if (player.inventory.remove(move) && live.bag.add(move)) {
+            } else {
                 live.saveBag()
                 live.openBagUi()
             }
@@ -34,7 +32,6 @@ class AmiliousMonkeyBagUi : InterfaceListener {
         }
 
         on(671, 27) { player, _, opcode, _, slot, _ ->
-            sendMessage(player, "take opcode=$opcode slot=$slot")
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
                 ?: return@on true
             val bagItem = live.bag.get(slot) ?: return@on true
@@ -43,12 +40,10 @@ class AmiliousMonkeyBagUi : InterfaceListener {
                 sendMessage(player, "Withdraw-X not wired yet. Use Withdraw-1/5/10/All.")
                 return@on true
             }
-            val move = Item(bagItem.id, min(want, bagItem.amount))
-            if (!player.inventory.hasSpaceFor(move)) {
+            val moved = transfer(live.bag, player.inventory, bagItem.id, want)
+            if (moved == 0) {
                 sendMessage(player, "You have no inventory space.")
-                return@on true
-            }
-            if (live.bag.remove(move) && player.inventory.add(move)) {
+            } else {
                 live.saveBag()
                 live.openBagUi()
             }
@@ -63,5 +58,15 @@ class AmiliousMonkeyBagUi : InterfaceListener {
         199 -> Int.MAX_VALUE
         234 -> -1
         else -> 1
+    }
+
+    private fun transfer(from: Container, to: Container, id: Int, want: Int): Int {
+        if (want <= 0) return 0
+        val n = min(want, from.getAmount(id))
+        if (n <= 0) return 0
+        val move = Item(id, n)
+        if (!to.hasSpaceFor(move)) return 0
+        if (from.remove(move) && to.add(move)) return n
+        return 0
     }
 }

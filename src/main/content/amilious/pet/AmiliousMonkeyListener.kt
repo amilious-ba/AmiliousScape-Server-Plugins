@@ -59,7 +59,21 @@ class AmiliousMonkeyListener : InteractionListener {
                 sendMessage(player, "That is not your monkey.")
                 return@onUseWith true
             }
-            if (player.inventory.remove(Item(MonkeyConfig.BANANA_ID, 1))) {
+            val banana = Item(MonkeyConfig.BANANA_ID, 1)
+            if (live.hunger() >= MonkeyConfig.HUNGER_MAX) {
+                if (!live.bag.hasSpaceFor(banana)) {
+                    sendMessage(player, "Gigos is full and his pack has no room.")
+                    return@onUseWith true
+                }
+                if (player.inventory.remove(banana) && live.bag.add(banana)) {
+                    live.saveBag()
+                    sendMessage(player, "Gigos stores the banana for later.")
+                }
+                return@onUseWith true
+            }
+            if (player.inventory.remove(banana)) {
+                live.addHunger(MonkeyConfig.HUNGER_BANANA)
+                GigosHudPacket.send(player, live)
                 sendMessage(player, "Gigos grabs the banana. Ook!")
             }
             true

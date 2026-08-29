@@ -67,6 +67,7 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
                     if (live == null) reject(player, "Gigos is not out.")
                     val on = player.getAttribute(MonkeyConfig.ATTR_LOOT, true)
                     setAttribute(player, MonkeyConfig.ATTR_LOOT, !on)
+                    live!!.refreshMenu()
                     notify(player, if (!on) "Gigos will loot your kills." else "Gigos will not loot.")
                 }
                 3 -> {

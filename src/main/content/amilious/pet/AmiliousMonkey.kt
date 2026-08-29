@@ -23,15 +23,27 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     private var lootBusy = false
 
     fun spawnAtOwner() {
+        val old = owner.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+        if (old != null && old !== this) {
+            old.dismiss()
+        }
         location = owner.location.transform(1, 0, 0)
         init()
         name = "Gigos"
         isWalks = true
         interaction.set(Option("Pack", 0))
         interaction.set(Option("Loot", 1))
+        interaction.set(Option("Dismiss", 2))
         loadBag()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
-        NpcMenuPacket.send(owner, this, "Gigos", 0 to "Pack", 1 to "Loot")
+        NpcMenuPacket.send(
+            owner,
+            this,
+            "Gigos",
+            0 to "Pack",
+            1 to "Loot",
+            2 to "Dismiss"
+        )
         sendMessage(owner, "Gigos hops down beside you.")
         followOwner()
     }

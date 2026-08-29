@@ -44,6 +44,8 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         isWalks = true
         interaction.set(Option("Pack", 0))
         interaction.set(Option("Talk-to", 1))
+        interaction.set(Option("Loot", 2))
+        interaction.set(Option("Dismiss", 3))
         loadBag()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
         NpcMenuPacket.send(

@@ -33,37 +33,53 @@ class ThrowDungAction : CompanionAction<AmiliousMonkey> {
     }
 
     override fun tick(m: AmiliousMonkey): Boolean {
-        if (phase == 0) {
-            val victim = RegionManager.getLocalNpcs(m.owner, 8)
-                .firstOrNull {
-                    it !== m && it.isActive && !it.isInvisible &&
-                            it.properties.combatPulse.isAttacking
-                } ?: return false
-            if (victim === m.owner || victim === m) return false
-            if (m.location.getDistance(victim.location) > 8) return false
-            pending = victim
-            dungWait = MonkeyConfig.DUNG_COOLDOWN
-            m.addHunger(-MonkeyConfig.HUNGER_THROW)
-            m.face(victim)
-            m.animate(m.properties.attackAnimation)
-            try {
-                Projectile.create(m, victim, 130).send()
-            } catch (_: Exception) {
+        when (phase) {
+            0 -> {
+                val victim = RegionManager.getLocalNpcs(m.owner, 8)
+                    .firstOrNull {
+                        it !== m && it.isActive && !it.isInvisible &&
+                                it.properties.combatPulse.isAttacking
+                    } ?: return false
+                if (victim === m.owner || victim === m) return false
+                if (m.location.getDistance(victim.location) > 8) return false
+                pending = victim
+                dungWait = MonkeyConfig.DUNG_COOLDOWN
+                m.addHunger(-MonkeyConfig.HUNGER_THROW)
+                m.face(victim)
+                m.animate(m.properties.attackAnimation)
+                GigosHudPacket.send(m.owner, m)
+                phase = 1
+                return true
             }
-            GigosHudPacket.send(m.owner, m)
-            phase = 3
-            return true
+            1, 2 -> {
+                phase++
+                return true
+            }
+            3 -> {
+                val victim = pending ?: return false
+                try {
+                    Projectile.create(m, victim, 130).send()
+                } catch (_: Exception) {
+                }
+                phase = 4
+                return true
+            }
+            4, 5 -> {
+                phase++
+                return true
+            }
+            else -> {
+                val victim = pending ?: return false
+                pending = null
+                if (!victim.isActive) return false
+                victim.graphics(Graphics(30))
+                val hit = 1 + (Math.random() * 3).toInt()
+                victim.impactHandler.manualHit(m, hit, ImpactHandler.HitsplatType.NORMAL)
+                victim.properties.combatPulse.attack(m)
+                sendMessage(m.owner, "Gigos flings something foul. ${victim.name} looks furious.")
+                return false
+            }
         }
-        phase--
-        if (phase > 0) return true
-        val victim = pending ?: return false
-        pending = null
-        if (!victim.isActive) return false
-        victim.graphics(Graphics(30))
-        val hit = 1 + (Math.random() * 3).toInt()
-        victim.impactHandler.manualHit(m, hit, ImpactHandler.HitsplatType.NORMAL)
-        victim.properties.combatPulse.attack(m)
-        sendMessage(m.owner, "Gigos flings something foul. ${victim.name} looks furious.")
-        return false
     }
+
 }

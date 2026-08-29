@@ -4,7 +4,6 @@ import core.api.sendMessage
 import core.game.interaction.IntType
 import core.game.interaction.InteractionListener
 import core.plugin.Initializable
-import org.rs09.consts.Items
 
 @Initializable
 class AmiliousMonkeyListener : InteractionListener {
@@ -32,16 +31,27 @@ class AmiliousMonkeyListener : InteractionListener {
             true
         }
 
-        onUseWith(IntType.NPC, Items.BANANA_1963, *ids) { player, used, with ->
+        onUseWith(IntType.NPC, Int.MAX_VALUE, *ids) { player, used, with ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-            if (live == null || live !== with) {
-                sendMessage(player, "That is not your monkey.")
+            if (live == null || with.id != MonkeyConfig.NPC_ID) {
+                return@onUseWith false
+            }
+            val item = used.asItem()
+            if (item.id == MonkeyConfig.BANANA_ID) {
+                return@onUseWith false // let the banana handler run
+            }
+            if (!player.inventory.contains(item.id, item.amount)) {
                 return@onUseWith true
             }
-            if (player.inventory.remove(used.asItem())) {
-                sendMessage(player, "Gigos grabs the banana. Ook!")
+            if (!live.bag.hasSpaceFor(item)) {
+                sendMessage(player, "Gigos cannot carry any more.")
+                return@onUseWith true
+            }
+            if (player.inventory.remove(item) && live.bag.add(item)) {
+                sendMessage(player, "Gigos stuffs the ${item.name.lowercase()} in his pack.")
             }
             true
         }
+
     }
 }

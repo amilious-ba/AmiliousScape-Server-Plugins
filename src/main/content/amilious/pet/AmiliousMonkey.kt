@@ -1,19 +1,22 @@
 package content.amilious.pet
 
 import core.api.sendMessage
+import core.game.node.item.Item
 import core.game.container.Container
-import core.game.interaction.MovementPulse
-import core.game.node.entity.combat.ImpactHandler
 import core.game.node.entity.npc.NPC
+import core.game.node.item.GroundItem
+import core.game.world.map.RegionManager
+import core.game.interaction.MovementPulse
 import core.game.node.entity.player.Player
 import core.game.node.item.GroundItemManager
-import core.game.world.map.RegionManager
+import core.game.node.entity.combat.ImpactHandler
 import core.game.world.update.flag.context.Graphics
 
 class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
 
     val bag = Container(MonkeyConfig.BOB_SIZE)
     private var dungWait = 0
+    private var lootBusy = false
 
     fun spawnAtOwner() {
         location = owner.location.transform(1, 0, 0)
@@ -47,7 +50,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         if (location.getDistance(owner.location) > MonkeyConfig.FOLLOW_DIST) {
             properties.teleportLocation = owner.location
         }
-
+        tryLoot()
         tryDung()
         if (!pulseManager.hasPulseRunning()) {
             followOwner()
@@ -83,4 +86,36 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         victim.properties.combatPulse.attack(this)
         sendMessage(owner, "Gigos flings something foul. ${victim.name} looks furious.")
     }
+
+    private fun tryLoot() {
+        if (lootBusy) return
+        if (bag.freeSlots() <= 0) return
+
+        val nearby = GroundItemManager.getItems()
+            .filter { gi ->
+                gi != null &&
+                        !gi.isRemoved &&
+                        gi.location.getDistance(location) <= MonkeyConfig.LOOT_RANGE &&
+                        bag.hasSpaceFor(gi)
+            }
+
+        val target: GroundItem = nearby.minByOrNull { gi ->
+            gi.location.getDistance(location)
+        } ?: return
+
+        lootBusy = true
+        pulseManager.run(object : MovementPulse(this, target) {
+            override fun pulse(): Boolean {
+                lootBusy = false
+                if (target.isRemoved) return true
+                val copy = Item(target.id, target.amount)
+                if (bag.add(copy)) {
+                    GroundItemManager.destroy(target)
+                    sendMessage(owner, "Gigos scoops up the ${copy.name.lowercase()}.")
+                }
+                return true
+            }
+        })
+    }
+
 }

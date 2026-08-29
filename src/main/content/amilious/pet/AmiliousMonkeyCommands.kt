@@ -23,20 +23,23 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
             }
         }
 
-        define("monkeybag", Privilege.STANDARD, "::monkeybag", "List what the monkey is carrying.") { player, _ ->
+        define("monkeytake", Privilege.STANDARD, "::monkeytake", "Take everything from Gigos.") { player, _ ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
             if (live == null) {
-                reject(player, "Your monkey is not out.")
+                reject(player, "Gigos is not out.")
             }
-            notify(player, "Monkey pack:")
-            val items = live!!.bag.toArray().filterNotNull()
-            if (items.isEmpty()) {
-                notify(player, " (empty)")
-            } else {
-                for (item in items) {
-                    notify(player, " - ${item.amount} x ${item.name}")
+            var moved = 0
+            for (item in live!!.bag.toArray()) {
+                if (item == null) continue
+                if (player.inventory.add(item)) {
+                    live.bag.remove(item)
+                    moved++
+                } else {
+                    notify(player, "Inventory full. Left the rest with Gigos.")
+                    break
                 }
             }
+            notify(player, if (moved == 0) "Gigos is not carrying anything." else "You take Gigos' pack.")
         }
 
         define(

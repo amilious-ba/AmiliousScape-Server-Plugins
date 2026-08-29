@@ -62,12 +62,14 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
             2 to if (lootOn) "Autoloot-on" else "Autoloot-off",
             3 to "Dismiss"
         )
+        GigosHudPacket.send(owner, this)
     }
 
     fun dismiss() {
         saveBag()
         NpcMenuPacket.clear(owner, this)
         owner.removeAttribute(MonkeyConfig.ATTR_ACTIVE)
+        GigosHudPacket.hide(owner)
         clear()
         sendMessage(owner, "Gigos scurries off. His pack is safe. ::monkey to call him back.")
     }

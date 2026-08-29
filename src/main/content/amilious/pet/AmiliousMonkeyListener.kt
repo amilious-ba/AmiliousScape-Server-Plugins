@@ -1,7 +1,6 @@
 package content.amilious.pet
 
 import core.api.sendMessage
-import core.api.setAttribute
 import core.game.interaction.IntType
 import core.game.interaction.InteractionListener
 import core.game.node.item.Item
@@ -25,15 +24,13 @@ class AmiliousMonkeyListener : InteractionListener {
             true
         }
 
-        on(ids, IntType.NPC, "talk-to", "talk to", "loot") { player, node ->
+        on(ids, IntType.NPC, "talk-to", "talk to") { player, node ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
             if (live == null || live !== node) {
                 sendMessage(player, "That is not your monkey.")
                 return@on true
             }
-            val on = player.getAttribute(MonkeyConfig.ATTR_LOOT, true)
-            setAttribute(player, MonkeyConfig.ATTR_LOOT, !on)
-            sendMessage(player, if (!on) "Gigos will loot your kills." else "Gigos will not loot.")
+            sendMessage(player, "Gigos chatters and looks at you.")
             true
         }
 

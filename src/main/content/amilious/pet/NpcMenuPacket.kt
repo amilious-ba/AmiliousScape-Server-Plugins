@@ -10,14 +10,14 @@ object NpcMenuPacket {
 
     fun send(player: Player, npc: NPC, displayName: String, vararg options: Pair<Int, String>) {
         val session = player.session ?: return
-        val buf = IoBuffer(OPCODE, PacketHeader.SHORT)
-        buf.putShort(npc.index)
-        buf.putShort(npc.id)
-        buf.put(0) // flags: 0 = set
+        val buf = IoBuffer(OPCODE, PacketHeader.BYTE)
+        buf.p2(npc.index)
+        buf.p2(npc.id)
+        buf.p1(0)
         buf.putString(displayName)
-        buf.put(options.size)
+        buf.p1(options.size)
         for ((slot, text) in options) {
-            buf.put(slot)
+            buf.p1(slot)
             buf.putString(text)
         }
         buf.cypherOpcode(session.isaacPair.output)
@@ -26,12 +26,12 @@ object NpcMenuPacket {
 
     fun clear(player: Player, npc: NPC) {
         val session = player.session ?: return
-        val buf = IoBuffer(OPCODE, PacketHeader.SHORT)
-        buf.putShort(npc.index)
-        buf.putShort(npc.id)
-        buf.put(1) // flags: bit0 = clear
+        val buf = IoBuffer(OPCODE, PacketHeader.BYTE)
+        buf.p2(npc.index)
+        buf.p2(npc.id)
+        buf.p1(1)
         buf.putString("")
-        buf.put(0)
+        buf.p1(0)
         buf.cypherOpcode(session.isaacPair.output)
         session.write(buf)
     }

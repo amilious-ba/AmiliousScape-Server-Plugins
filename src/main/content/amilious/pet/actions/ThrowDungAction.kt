@@ -12,6 +12,9 @@ import core.game.world.update.flag.context.Graphics
 class ThrowDungAction : CompanionAction<AmiliousMonkey> {
     private var dungWait = 0
 
+    private var phase = 0
+    private var pending: core.game.node.entity.npc.NPC? = null
+
     override fun name() = "dung"
 
     override fun cooldown(m: AmiliousMonkey) {
@@ -24,27 +27,42 @@ class ThrowDungAction : CompanionAction<AmiliousMonkey> {
         return m.owner.properties.combatPulse.isAttacking
     }
 
+    override fun start(m: AmiliousMonkey) {
+        phase = 0
+        pending = null
+    }
+
     override fun tick(m: AmiliousMonkey): Boolean {
-        val victim = RegionManager.getLocalNpcs(m.owner, 8)
-            .firstOrNull {
-                it !== m && it.isActive && !it.isInvisible &&
-                        it.properties.combatPulse.isAttacking
-            } ?: return false
-        if (victim === m.owner || victim === m) return false
-        if (m.location.getDistance(victim.location) > 8) return false
-        dungWait = MonkeyConfig.DUNG_COOLDOWN
-        m.addHunger(-MonkeyConfig.HUNGER_THROW)
-        m.face(victim)
-        m.animate(m.properties.attackAnimation)
-        try {
-            Projectile.create(m, victim, 130).send()
-        } catch (_: Exception) {
+        if (phase == 0) {
+            val victim = RegionManager.getLocalNpcs(m.owner, 8)
+                .firstOrNull {
+                    it !== m && it.isActive && !it.isInvisible &&
+                            it.properties.combatPulse.isAttacking
+                } ?: return false
+            if (victim === m.owner || victim === m) return false
+            if (m.location.getDistance(victim.location) > 8) return false
+            pending = victim
+            dungWait = MonkeyConfig.DUNG_COOLDOWN
+            m.addHunger(-MonkeyConfig.HUNGER_THROW)
+            m.face(victim)
+            m.animate(m.properties.attackAnimation)
+            try {
+                Projectile.create(m, victim, 130).send()
+            } catch (_: Exception) {
+            }
+            GigosHudPacket.send(m.owner, m)
+            phase = 3
+            return true
         }
+        phase--
+        if (phase > 0) return true
+        val victim = pending ?: return false
+        pending = null
+        if (!victim.isActive) return false
         victim.graphics(Graphics(30))
         val hit = 1 + (Math.random() * 3).toInt()
         victim.impactHandler.manualHit(m, hit, ImpactHandler.HitsplatType.NORMAL)
         victim.properties.combatPulse.attack(m)
-        GigosHudPacket.send(m.owner, m)
         sendMessage(m.owner, "Gigos flings something foul. ${victim.name} looks furious.")
         return false
     }

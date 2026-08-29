@@ -27,11 +27,8 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         init()
         name = "Gigos"
         isWalks = true
-        try {
-            interaction.set(Option("Loot", 2))
-            interaction.set(Option("Put-away", 3))
-        } catch (_: Exception) {
-        }
+        interaction.set(Option("Pack", 0))
+        interaction.set(Option("Loot", 1))
         loadBag()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
         sendMessage(owner, "Gigos hops down beside you.")
@@ -111,8 +108,9 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
 
     private fun isOwnerDrop(gi: GroundItem): Boolean {
         if (gi.isRemoved) return false
+        if (gi.droppedBy(owner)) return true
         if (gi.dropper == owner) return true
-        return gi.droppedBy(owner)
+        return false
     }
 
     private fun tryLoot() {
@@ -121,24 +119,34 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         if (bag.freeSlots() <= 0) return
 
         val target = GroundItemManager.getItems()
+            .filter { !it.isRemoved && it.location.getDistance(location) <= MonkeyConfig.LOOT_RANGE }
             .filter { isOwnerDrop(it) }
-            .filter { it.location.getDistance(location) <= MonkeyConfig.LOOT_RANGE }
-            .filter { bag.hasSpaceFor(it) }
+            .filter { bag.hasSpaceFor(Item(it.id, it.amount)) }
             .minByOrNull { it.location.getDistance(location) }
             ?: return
 
+        fun scoop(): Boolean {
+            if (target.isRemoved || !isOwnerDrop(target)) return true
+            val copy = Item(target.id, target.amount)
+            if (!bag.hasSpaceFor(copy)) return true
+            if (bag.add(copy)) {
+                GroundItemManager.destroy(target)
+                saveBag()
+                sendMessage(owner, "Gigos scoops up the ${copy.name.lowercase()}.")
+            }
+            return true
+        }
+
+        if (location.getDistance(target.location) <= 1.5) {
+            scoop()
+            return
+        }
+
         lootBusy = true
-        pulseManager.run(object : MovementPulse(this, target) {
+        pulseManager.run(object : MovementPulse(this, target.location) {
             override fun pulse(): Boolean {
                 lootBusy = false
-                if (target.isRemoved || !isOwnerDrop(target)) return true
-                val copy = Item(target.id, target.amount)
-                if (bag.add(copy)) {
-                    GroundItemManager.destroy(target)
-                    saveBag()
-                    sendMessage(owner, "Gigos scoops up the ${copy.name.lowercase()}.")
-                }
-                return true
+                return scoop()
             }
         })
     }

@@ -22,6 +22,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     val bag = Container(MonkeyConfig.BOB_SIZE)
     private var dungWait = 0
     private var lootBusy = false
+    private var eatWait = 0
 
     private fun dungEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_DUNG, true)
 
@@ -101,6 +102,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         }
         tryLoot()
         tryDung()
+        tryFeed()
         if (!pulseManager.hasPulseRunning()) {
             followOwner()
         }
@@ -233,6 +235,40 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         victim.properties.combatPulse.attack(this)
         GigosHudPacket.send(owner, this)
         sendMessage(owner, "Gigos flings something foul. ${victim.name} looks furious.")
+    }
+
+    private fun tryFeed() {
+        if (eatWait > 0) {
+            eatWait--
+            return
+        }
+        if (hunger() >= 30) return
+
+        fun eatBanana(): Boolean {
+            val slot = bag.toArray().indexOfFirst { it != null && it.id == MonkeyConfig.BANANA_ID }
+            if (slot < 0) return false
+            val it = bag.get(slot) ?: return false
+            if (!bag.remove(Item(MonkeyConfig.BANANA_ID, 1))) return false
+            addHunger(MonkeyConfig.HUNGER_BANANA)
+            saveBag()
+            GigosHudPacket.send(owner, this)
+            sendMessage(owner, "Gigos eats a banana.")
+            eatWait = 5
+            return true
+        }
+
+        if (eatBanana()) return
+
+        val bone = bag.toArray().firstOrNull { it != null && isBone(it) } ?: return
+        if (!bag.remove(Item(bone.id, 1))) return
+        bag.add(Item(MonkeyConfig.BANANA_ID, 1))
+        sendMessage(owner, "Gigos turns the ${bone.name.lowercase()} into a banana.")
+        eatBanana()
+    }
+
+    private fun isBone(item: Item): Boolean {
+        val n = item.name.lowercase()
+        return n == "bones" || n.endsWith(" bones") || n == "bone"
     }
 
 }

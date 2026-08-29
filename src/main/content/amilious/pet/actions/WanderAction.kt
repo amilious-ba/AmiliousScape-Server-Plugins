@@ -17,8 +17,8 @@ class WanderAction : CompanionAction<AmiliousMonkey> {
 
     override fun name() = "wander"
 
-    override fun cooldown(m: AmiliousMonkey) {
-        val loc = m.owner.location
+    override fun cooldown(actor: AmiliousMonkey) {
+        val loc = actor.owner.location
         if (loc.x == lastX && loc.y == lastY) {
             idleTicks++
         } else {
@@ -29,40 +29,40 @@ class WanderAction : CompanionAction<AmiliousMonkey> {
         if (wait > 0) wait--
     }
 
-    override fun canStart(m: AmiliousMonkey): Boolean {
+    override fun canStart(actor: AmiliousMonkey): Boolean {
         if (wait > 0) return false
         if (idleTicks < 15) return false
-        if (m.owner.properties.combatPulse.isAttacking) return false
-        if (m.location.getDistance(m.owner.location) > MonkeyConfig.FOLLOW_DIST) return false
+        if (actor.owner.properties.combatPulse.isAttacking) return false
+        if (actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) return false
         return true
     }
 
-    override fun start(m: AmiliousMonkey) {
+    override fun start(actor: AmiliousMonkey) {
         var dx = 0
         var dy = 0
         while (dx == 0 && dy == 0) {
             dx = Random.nextInt(-2, 3)
             dy = Random.nextInt(-2, 3)
         }
-        dest = m.owner.location.transform(dx, dy,0)
+        dest = actor.owner.location.transform(dx, dy,0)
         phase = 0
     }
 
-    override fun tick(m: AmiliousMonkey): Boolean {
+    override fun tick(actor: AmiliousMonkey): Boolean {
         val tile = dest ?: return false
         return when (phase) {
             0 -> {
-                m.pulseManager.run(object : MovementPulse(m, tile) {
+                actor.pulseManager.run(object : MovementPulse(actor, tile) {
                     override fun pulse(): Boolean = true
                 })
                 phase = 1
                 true
             }
             1 -> {
-                if (m.location.getDistance(tile) > 1.2 && m.pulseManager.hasPulseRunning()) {
+                if (actor.location.getDistance(tile) > 1.2 && actor.pulseManager.hasPulseRunning()) {
                     return true
                 }
-                m.face(m.owner)
+                actor.face(actor.owner)
                 wait = Random.nextInt(8, 20)
                 phase = 2
                 true

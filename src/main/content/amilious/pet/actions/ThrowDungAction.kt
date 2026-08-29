@@ -17,37 +17,37 @@ class ThrowDungAction : CompanionAction<AmiliousMonkey> {
 
     override fun name() = "dung"
 
-    override fun cooldown(m: AmiliousMonkey) {
+    override fun cooldown(actor: AmiliousMonkey) {
         if (dungWait > 0) dungWait--
     }
 
-    override fun canStart(m: AmiliousMonkey): Boolean {
-        if (dungWait > 0 || !m.dungEnabled()) return false
-        if (m.hunger() < MonkeyConfig.HUNGER_THROW) return false
-        return m.owner.properties.combatPulse.isAttacking
+    override fun canStart(actor: AmiliousMonkey): Boolean {
+        if (dungWait > 0 || !actor.dungEnabled()) return false
+        if (actor.hunger() < MonkeyConfig.HUNGER_THROW) return false
+        return actor.owner.properties.combatPulse.isAttacking
     }
 
-    override fun start(m: AmiliousMonkey) {
+    override fun start(actor: AmiliousMonkey) {
         phase = 0
         pending = null
     }
 
-    override fun tick(m: AmiliousMonkey): Boolean {
+    override fun tick(actor: AmiliousMonkey): Boolean {
         when (phase) {
             0 -> {
-                val victim = RegionManager.getLocalNpcs(m.owner, 8)
+                val victim = RegionManager.getLocalNpcs(actor.owner, 8)
                     .firstOrNull {
-                        it !== m && it.isActive && !it.isInvisible &&
+                        it !== actor && it.isActive && !it.isInvisible &&
                                 it.properties.combatPulse.isAttacking
                     } ?: return false
-                if (victim === m.owner || victim === m) return false
-                if (m.location.getDistance(victim.location) > 8) return false
+                if (victim === actor.owner || victim === actor) return false
+                if (actor.location.getDistance(victim.location) > 8) return false
                 pending = victim
                 dungWait = MonkeyConfig.DUNG_COOLDOWN
-                m.addHunger(-MonkeyConfig.HUNGER_THROW)
-                m.face(victim)
-                m.animate(m.properties.attackAnimation)
-                GigosHudPacket.send(m.owner, m)
+                actor.addHunger(-MonkeyConfig.HUNGER_THROW)
+                actor.face(victim)
+                actor.animate(actor.properties.attackAnimation)
+                GigosHudPacket.send(actor.owner, actor)
                 phase = 1
                 return true
             }
@@ -58,7 +58,7 @@ class ThrowDungAction : CompanionAction<AmiliousMonkey> {
             3 -> {
                 val victim = pending ?: return false
                 try {
-                    Projectile.create(m, victim, 130).send()
+                    Projectile.create(actor, victim, 130).send()
                 } catch (_: Exception) {
                 }
                 phase = 4
@@ -74,9 +74,9 @@ class ThrowDungAction : CompanionAction<AmiliousMonkey> {
                 if (!victim.isActive) return false
                 victim.graphics(Graphics(30))
                 val hit = 1 + (Math.random() * 3).toInt()
-                victim.impactHandler.manualHit(m, hit, ImpactHandler.HitsplatType.NORMAL)
-                victim.properties.combatPulse.attack(m)
-                sendMessage(m.owner, "Gigos flings something foul. ${victim.name} looks furious.")
+                victim.impactHandler.manualHit(actor, hit, ImpactHandler.HitsplatType.NORMAL)
+                victim.properties.combatPulse.attack(actor)
+                sendMessage(actor.owner, "Gigos flings something foul. ${victim.name} looks furious.")
                 return false
             }
         }

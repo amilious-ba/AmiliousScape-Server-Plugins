@@ -60,6 +60,7 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
                 reject(player, "Gigos is not out.")
             }
             when (args[1].toIntOrNull()) {
+                0 -> live!!.openBagUi()
                 1 -> {
                     val on = player.getAttribute(MonkeyConfig.ATTR_LOOT, true)
                     setAttribute(player, MonkeyConfig.ATTR_LOOT, !on)

@@ -11,7 +11,7 @@ import core.plugin.Initializable
 class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
 
     override fun defineCommands() {
-        define("monkey", Privilege.STANDARD, "::monkey", "Summon or dismiss your monkey.") { player, _ ->
+        define("monkey", Privilege.STANDARD, "::monkey", "Summon or dismiss Gigos.") { player, _ ->
             if (!owns(player)) {
                 reject(player, "Gigos only answers to its owner.")
             }
@@ -21,6 +21,14 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
             } else {
                 AmiliousMonkey(player).spawnAtOwner()
             }
+        }
+
+        define("monkeybag", Privilege.STANDARD, "::monkeybag", "Open Gigos' pack.") { player, _ ->
+            val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+            if (live == null) {
+                reject(player, "Gigos is not out.")
+            }
+            live!!.openBagUi()
         }
 
         define("monkeytake", Privilege.STANDARD, "::monkeytake", "Take everything from Gigos.") { player, _ ->
@@ -39,6 +47,7 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
                     break
                 }
             }
+            live.saveBag()
             notify(player, if (moved == 0) "Gigos is not carrying anything." else "You take Gigos' pack.")
         }
 

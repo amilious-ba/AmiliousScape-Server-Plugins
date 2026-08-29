@@ -3,12 +3,12 @@ package content.amilious.pet
 import core.api.sendMessage
 import core.game.interaction.IntType
 import core.game.interaction.InteractionListener
+import core.game.node.item.Item
 import core.plugin.Initializable
 
 @Initializable
 class AmiliousMonkeyListener : InteractionListener {
 
-    // cover default + color variants so Pick-up works after you change NPC_ID
     private val ids = intArrayOf(
         6943, 7211, 7213, 7215, 7217, 7219, 7221, 7223, 7225, 7227
     )
@@ -16,17 +16,26 @@ class AmiliousMonkeyListener : InteractionListener {
     override fun defineListeners() {
         on(ids, IntType.NPC, "pick-up", "pickup", "talk-to", "talk to", "interact") { player, node ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-            if (live == null || live !== node) {
+            if (live == null || node.id != MonkeyConfig.NPC_ID) {
                 sendMessage(player, "That is not your monkey.")
                 return@on true
             }
             when (player.getAttribute("interact:option", "").lowercase()) {
-                "talk-to", "talk to", "interact" -> {
-                    sendMessage(player, "Gigos chatters and looks at you.")
-                }
-                else -> {
-                    live.dismiss()
-                }
+                "talk-to", "talk to", "interact" -> live.openBagUi()
+                else -> live.dismiss()
+            }
+            true
+        }
+
+        onUseWith(IntType.NPC, MonkeyConfig.BANANA_ID, *ids) { player, used, with ->
+            val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+            if (live == null || with.id != MonkeyConfig.NPC_ID) {
+                sendMessage(player, "That is not your monkey.")
+                return@onUseWith true
+            }
+            val bite = Item(MonkeyConfig.BANANA_ID, 1)
+            if (player.inventory.remove(bite)) {
+                sendMessage(player, "Gigos grabs the banana. Ook!")
             }
             true
         }
@@ -36,11 +45,11 @@ class AmiliousMonkeyListener : InteractionListener {
             if (live == null || with.id != MonkeyConfig.NPC_ID) {
                 return@onUseWith false
             }
-            val item = used.asItem()
-            if (item.id == MonkeyConfig.BANANA_ID) {
-                return@onUseWith false // let the banana handler run
+            if (used.id == MonkeyConfig.BANANA_ID) {
+                return@onUseWith false
             }
-            if (!player.inventory.contains(item.id, item.amount)) {
+            val item = Item(used.id, 1)
+            if (!player.inventory.contains(item.id, 1)) {
                 return@onUseWith true
             }
             if (!live.bag.hasSpaceFor(item)) {
@@ -48,10 +57,10 @@ class AmiliousMonkeyListener : InteractionListener {
                 return@onUseWith true
             }
             if (player.inventory.remove(item) && live.bag.add(item)) {
+                live.saveBag()
                 sendMessage(player, "Gigos stuffs the ${item.name.lowercase()} in his pack.")
             }
             true
         }
-
     }
 }

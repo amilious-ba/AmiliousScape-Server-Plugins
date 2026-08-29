@@ -11,6 +11,7 @@ object MonkeyConfig {
     const val DUNG_COOLDOWN = 8
     const val DUNG_MAX_HIT = 2
     const val BANANA_ID = 1963
+    const val ATTR_BAG = "/save:amilious_monkey_bag"
 
     const val ATTR_OWNED = "/save:amilious_monkey_owned"
     const val ATTR_ACTIVE = "amilious_monkey"

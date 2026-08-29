@@ -10,11 +10,10 @@ class AmiliousMonkeyBagUi : InterfaceListener {
 
     override fun defineInterfaceListeners() {
         // Player inventory in the BoB window (665, child 0)
-        on(665, 0) { player, _, opcode, _, slot, itemId ->
-            sendMessage(player, "store opcode=$opcode slot=$slot item=$itemId")
+        on(665, 0) { player, _, opcode, _, slot, _ ->
+            sendMessage(player, "store opcode=$opcode slot=$slot")
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
                 ?: return@on true
-            if (itemId <= 0) return@on true
             val invItem = player.inventory.get(slot) ?: return@on true
             if (invItem.id == MonkeyConfig.BANANA_ID) return@on true
             val move = Item(invItem.id, 1)
@@ -29,12 +28,10 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             true
         }
 
-        // Gigos pack (671, child 27)
-        on(671, 27) { player, _, opcode, _, slot, itemId ->
-            sendMessage(player, "take opcode=$opcode slot=$slot item=$itemId")
+        on(671, 27) { player, _, opcode, _, slot, _ ->
+            sendMessage(player, "take opcode=$opcode slot=$slot")
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
                 ?: return@on true
-            if (itemId <= 0) return@on true
             val bagItem = live.bag.get(slot) ?: return@on true
             val move = Item(bagItem.id, 1)
             if (!player.inventory.hasSpaceFor(move)) {
@@ -47,5 +44,7 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             }
             true
         }
+
+
     }
 }

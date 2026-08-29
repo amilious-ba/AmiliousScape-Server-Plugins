@@ -37,12 +37,11 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         loadBag()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
         NpcMenuPacket.send(
-            owner,
-            this,
-            "Gigos",
+            owner, this, "Gigos",
             0 to "Pack",
-            1 to "Loot",
-            2 to "Dismiss"
+            1 to "Talk-to",
+            2 to "Loot",
+            3 to "Dismiss"
         )
         sendMessage(owner, "Gigos hops down beside you.")
         followOwner()

@@ -51,22 +51,28 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
             notify(player, if (moved == 0) "Gigos is not carrying anything." else "You take Gigos' pack.")
         }
 
-        define("gigosop", Privilege.STANDARD, "::gigosop slot", "Monkey menu extra actions.") { player, args ->
+        define("gigosop", Privilege.STANDARD, "::gigosop slot", "Monkey menu actions.") { player, args ->
             if (args.size < 2) {
                 reject(player, "Invalid monkey action.")
             }
+            val slot = args[1].toIntOrNull()
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-            if (live == null) {
-                reject(player, "Gigos is not out.")
-            }
-            when (args[1].toIntOrNull()) {
-                0 -> live!!.openBagUi()
-                1 -> {
+            when (slot) {
+                1 -> notify(player, "Gigos chatters and looks at you.")
+                0 -> {
+                    if (live == null) reject(player, "Gigos is not out.")
+                    live!!.openBagUi()
+                }
+                2 -> {
+                    if (live == null) reject(player, "Gigos is not out.")
                     val on = player.getAttribute(MonkeyConfig.ATTR_LOOT, true)
                     setAttribute(player, MonkeyConfig.ATTR_LOOT, !on)
                     notify(player, if (!on) "Gigos will loot your kills." else "Gigos will not loot.")
                 }
-                2 -> live!!.dismiss()
+                3 -> {
+                    if (live == null) reject(player, "Gigos is not out.")
+                    live!!.dismiss()
+                }
                 else -> reject(player, "Unknown monkey action.")
             }
         }

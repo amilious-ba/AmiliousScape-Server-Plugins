@@ -20,4 +20,5 @@ object MonkeyConfig {
     const val ATTR_BAG = "/save:amilious_monkey_bag"
     const val ATTR_LOOT = "/save:amilious_monkey_loot"
     const val ATTR_HUNGER = "/save:amilious_gigos_hunger"
+    const val ATTR_DUNG = "/save:amilious_monkey_dung"
 }

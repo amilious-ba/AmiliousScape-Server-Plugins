@@ -74,6 +74,13 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
                     if (live == null) reject(player, "Gigos is not out.")
                     live!!.dismiss()
                 }
+                4 -> {
+                    if (live == null) reject(player, "Gigos is not out.")
+                    val on = player.getAttribute(MonkeyConfig.ATTR_DUNG, true)
+                    setAttribute(player, MonkeyConfig.ATTR_DUNG, !on)
+                    GigosHudPacket.send(player, live!!)
+                    notify(player, if (!on) "Gigos will throw dung." else "Gigos will not throw dung.")
+                }
                 else -> reject(player, "Unknown monkey action.")
             }
         }

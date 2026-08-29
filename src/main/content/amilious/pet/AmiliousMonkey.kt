@@ -23,6 +23,8 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     private var dungWait = 0
     private var lootBusy = false
 
+    private fun dungEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_DUNG, true)
+
     fun hunger(): Int = owner.getAttribute(MonkeyConfig.ATTR_HUNGER, MonkeyConfig.HUNGER_MAX)
 
     fun setHunger(v: Int) {
@@ -202,6 +204,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
 
     private fun tryDung() {
         if (dungWait > 0) return
+        if (!dungEnabled()) return
         if (hunger() < MonkeyConfig.HUNGER_THROW) return
         if (!owner.properties.combatPulse.isAttacking) return
         val victim = RegionManager.getLocalNpcs(owner, 8)
@@ -215,8 +218,11 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         addHunger(-MonkeyConfig.HUNGER_THROW)
         face(victim)
         victim.graphics(Graphics(30))
+        val hit = 1 + (Math.random() * 3).toInt()
+        victim.impactHandler.manualHit(this, hit, core.game.node.entity.combat.ImpactHandler.HitsplatType.NORMAL)
         victim.properties.combatPulse.attack(this)
         GigosHudPacket.send(owner, this)
         sendMessage(owner, "Gigos flings something foul. ${victim.name} looks furious.")
     }
+
 }

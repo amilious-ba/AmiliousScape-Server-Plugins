@@ -167,37 +167,47 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         if (hunger() < MonkeyConfig.HUNGER_LOOT) return
         if (bag.freeSlots() <= 0) return
 
-        val target = GroundItemManager.getItems()
+        val piles = GroundItemManager.getItems()
             .filter { !it.isRemoved && it.location.getDistance(location) <= MonkeyConfig.LOOT_RANGE }
             .filter { isOwnerDrop(it) }
             .filter { bag.hasSpaceFor(Item(it.id, it.amount)) }
-            .minByOrNull { it.location.getDistance(location) }
-            ?: return
+        val first = piles.minByOrNull { it.location.getDistance(location) } ?: return
+        val tile = first.location
 
-        fun scoop(): Boolean {
-            if (target.isRemoved || !isOwnerDrop(target)) return true
-            val copy = Item(target.id, target.amount)
-            if (!bag.hasSpaceFor(copy)) return true
-            if (bag.add(copy)) {
-                GroundItemManager.destroy(target)
+        fun scoopTile(): Boolean {
+            val here = GroundItemManager.getItems()
+                .filter { !it.isRemoved && it.location == tile }
+                .filter { isOwnerDrop(it) }
+            var any = false
+            for (gi in here) {
+                if (hunger() < MonkeyConfig.HUNGER_LOOT) break
+                if (bag.freeSlots() <= 0) break
+                val copy = Item(gi.id, gi.amount)
+                if (!bag.hasSpaceFor(copy)) continue
+                if (bag.add(copy)) {
+                    GroundItemManager.destroy(gi)
+                    addHunger(-MonkeyConfig.HUNGER_LOOT)
+                    any = true
+                    sendMessage(owner, "Gigos scoops up the ${copy.name.lowercase()}.")
+                }
+            }
+            if (any) {
                 saveBag()
-                addHunger(-MonkeyConfig.HUNGER_LOOT)
                 GigosHudPacket.send(owner, this@AmiliousMonkey)
-                sendMessage(owner, "Gigos scoops up the ${copy.name.lowercase()}.")
             }
             return true
         }
 
-        if (location.getDistance(target.location) <= 1.5) {
-            scoop()
+        if (location.getDistance(tile) <= 1.5) {
+            scoopTile()
             return
         }
 
         lootBusy = true
-        pulseManager.run(object : MovementPulse(this, target.location) {
+        pulseManager.run(object : MovementPulse(this, tile) {
             override fun pulse(): Boolean {
                 lootBusy = false
-                return scoop()
+                return scoopTile()
             }
         })
     }

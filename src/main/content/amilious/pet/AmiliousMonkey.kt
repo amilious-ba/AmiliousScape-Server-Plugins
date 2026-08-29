@@ -48,15 +48,20 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         interaction.set(Option("Dismiss", 3))
         loadBag()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
+        refreshMenu()
+        sendMessage(owner, "Gigos hops down beside you.")
+        followOwner()
+    }
+
+    fun refreshMenu() {
+        val lootOn = owner.getAttribute(MonkeyConfig.ATTR_LOOT, true)
         NpcMenuPacket.send(
             owner, this, "Gigos",
             0 to "Pack",
             1 to "Talk-to",
-            2 to "Loot",
+            2 to if (lootOn) "Autoloot-on" else "Autoloot-off",
             3 to "Dismiss"
         )
-        sendMessage(owner, "Gigos hops down beside you.")
-        followOwner()
     }
 
     fun dismiss() {

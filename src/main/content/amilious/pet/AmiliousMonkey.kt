@@ -1,20 +1,20 @@
 package content.amilious.pet
 
 import core.api.sendMessage
-import core.game.node.item.Item
-import core.game.container.Container
-import core.game.node.entity.npc.NPC
-import core.game.node.item.GroundItem
-import core.game.world.map.RegionManager
-import core.game.interaction.MovementPulse
-import core.game.node.entity.player.Player
-import core.game.node.item.GroundItemManager
-import core.game.node.entity.combat.ImpactHandler
-import core.game.world.update.flag.context.Graphics
-
 import core.game.component.CloseEvent
 import core.game.component.Component
+import core.game.container.Container
 import core.game.container.access.InterfaceContainer
+import core.game.interaction.MovementPulse
+import core.game.node.entity.combat.ImpactHandler
+import core.game.node.entity.npc.NPC
+import core.game.node.entity.player.Player
+import core.game.node.item.GroundItem
+import core.game.node.item.GroundItemManager
+import core.game.node.item.Item
+import core.game.world.map.RegionManager
+import core.game.world.update.flag.context.Graphics
+import core.game.interaction.Option
 
 class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
 
@@ -25,9 +25,14 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     fun spawnAtOwner() {
         location = owner.location.transform(1, 0, 0)
         init()
-        loadBag()
         name = "Gigos"
         isWalks = true
+        try {
+            interaction.set(Option("Loot", 2))
+            interaction.set(Option("Put-away", 3))
+        } catch (_: Exception) {
+        }
+        loadBag()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
         sendMessage(owner, "Gigos hops down beside you.")
         followOwner()
@@ -35,10 +40,9 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
 
     fun dismiss() {
         saveBag()
-        bag.clear()
         owner.removeAttribute(MonkeyConfig.ATTR_ACTIVE)
         clear()
-        sendMessage(owner, "Gigos scurries off. ::monkey to call him back.")
+        sendMessage(owner, "Gigos scurries off. His pack is safe. ::monkey to call him back.")
     }
 
     fun tickCompanion() {
@@ -47,7 +51,6 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
             return
         }
         if (dungWait > 0) dungWait--
-
         if (location.getDistance(owner.location) > MonkeyConfig.FOLLOW_DIST) {
             properties.teleportLocation = owner.location
         }
@@ -56,12 +59,6 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         if (!pulseManager.hasPulseRunning()) {
             followOwner()
         }
-    }
-
-    private fun followOwner() {
-        pulseManager.run(object : MovementPulse(this, owner) {
-            override fun pulse(): Boolean = false
-        })
     }
 
     fun saveBag() {
@@ -104,21 +101,58 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         )
     }
 
+    private fun followOwner() {
+        pulseManager.run(object : MovementPulse(this, owner) {
+            override fun pulse(): Boolean = false
+        })
+    }
+
+    private fun lootEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_LOOT, true)
+
+    private fun isOwnerDrop(gi: GroundItem): Boolean {
+        if (gi.isRemoved) return false
+        if (gi.dropper == owner) return true
+        return gi.droppedBy(owner)
+    }
+
+    private fun tryLoot() {
+        if (lootBusy) return
+        if (!lootEnabled()) return
+        if (bag.freeSlots() <= 0) return
+
+        val target = GroundItemManager.getItems()
+            .filter { isOwnerDrop(it) }
+            .filter { it.location.getDistance(location) <= MonkeyConfig.LOOT_RANGE }
+            .filter { bag.hasSpaceFor(it) }
+            .minByOrNull { it.location.getDistance(location) }
+            ?: return
+
+        lootBusy = true
+        pulseManager.run(object : MovementPulse(this, target) {
+            override fun pulse(): Boolean {
+                lootBusy = false
+                if (target.isRemoved || !isOwnerDrop(target)) return true
+                val copy = Item(target.id, target.amount)
+                if (bag.add(copy)) {
+                    GroundItemManager.destroy(target)
+                    saveBag()
+                    sendMessage(owner, "Gigos scoops up the ${copy.name.lowercase()}.")
+                }
+                return true
+            }
+        })
+    }
+
     private fun tryDung() {
         if (dungWait > 0) return
         if (!owner.properties.combatPulse.isAttacking) return
-
         val victim = RegionManager.getLocalNpcs(owner, 8)
             .firstOrNull {
-                it !== this &&
-                        it.isActive &&
-                        !it.isInvisible &&
+                it !== this && it.isActive && !it.isInvisible &&
                         it.properties.combatPulse.isAttacking
             } ?: return
-
         if (victim === owner || victim === this) return
         if (location.getDistance(victim.location) > 8) return
-
         dungWait = MonkeyConfig.DUNG_COOLDOWN
         face(victim)
         victim.graphics(Graphics(30))
@@ -127,36 +161,4 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         victim.properties.combatPulse.attack(this)
         sendMessage(owner, "Gigos flings something foul. ${victim.name} looks furious.")
     }
-
-    private fun tryLoot() {
-        if (lootBusy) return
-        if (bag.freeSlots() <= 0) return
-
-        val nearby = GroundItemManager.getItems()
-            .filter { gi ->
-                gi != null &&
-                        !gi.isRemoved &&
-                        gi.location.getDistance(location) <= MonkeyConfig.LOOT_RANGE &&
-                        bag.hasSpaceFor(gi)
-            }
-
-        val target: GroundItem = nearby.minByOrNull { gi ->
-            gi.location.getDistance(location)
-        } ?: return
-
-        lootBusy = true
-        pulseManager.run(object : MovementPulse(this, target) {
-            override fun pulse(): Boolean {
-                lootBusy = false
-                if (target.isRemoved) return true
-                val copy = Item(target.id, target.amount)
-                if (bag.add(copy)) {
-                    GroundItemManager.destroy(target)
-                    sendMessage(owner, "Gigos scoops up the ${copy.name.lowercase()}.")
-                }
-                return true
-            }
-        })
-    }
-
 }

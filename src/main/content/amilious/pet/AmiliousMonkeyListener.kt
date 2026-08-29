@@ -14,27 +14,36 @@ class AmiliousMonkeyListener : InteractionListener {
     )
 
     override fun defineListeners() {
-        on(ids, IntType.NPC, "pick-up", "pickup", "talk-to", "talk to", "interact") { player, node ->
+        on(
+            ids,
+            IntType.NPC,
+            "pick-up", "pickup", "talk-to", "talk to", "interact",
+            "pack", "loot", "put-away"
+        ) { player, node ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
             if (live == null || node.id != MonkeyConfig.NPC_ID) {
                 sendMessage(player, "That is not your monkey.")
                 return@on true
             }
             when (player.getAttribute("interact:option", "").lowercase()) {
-                "talk-to", "talk to", "interact" -> live.openBagUi()
-                else -> live.dismiss()
+                "loot" -> {
+                    val on = player.getAttribute(MonkeyConfig.ATTR_LOOT, true)
+                    player.setAttribute(MonkeyConfig.ATTR_LOOT, !on)
+                    sendMessage(player, if (!on) "Gigos will loot your kills." else "Gigos will not loot.")
+                }
+                "put-away" -> live.dismiss()
+                else -> live.openBagUi()
             }
             true
         }
 
-        onUseWith(IntType.NPC, MonkeyConfig.BANANA_ID, *ids) { player, used, with ->
+        onUseWith(IntType.NPC, MonkeyConfig.BANANA_ID, *ids) { player, _, with ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
             if (live == null || with.id != MonkeyConfig.NPC_ID) {
                 sendMessage(player, "That is not your monkey.")
                 return@onUseWith true
             }
-            val bite = Item(MonkeyConfig.BANANA_ID, 1)
-            if (player.inventory.remove(bite)) {
+            if (player.inventory.remove(Item(MonkeyConfig.BANANA_ID, 1))) {
                 sendMessage(player, "Gigos grabs the banana. Ook!")
             }
             true
@@ -42,16 +51,9 @@ class AmiliousMonkeyListener : InteractionListener {
 
         onUseWith(IntType.NPC, Int.MAX_VALUE, *ids) { player, used, with ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-            if (live == null || with.id != MonkeyConfig.NPC_ID) {
-                return@onUseWith false
-            }
-            if (used.id == MonkeyConfig.BANANA_ID) {
-                return@onUseWith false
-            }
+            if (live == null || with.id != MonkeyConfig.NPC_ID) return@onUseWith false
+            if (used.id == MonkeyConfig.BANANA_ID) return@onUseWith false
             val item = Item(used.id, 1)
-            if (!player.inventory.contains(item.id, 1)) {
-                return@onUseWith true
-            }
             if (!live.bag.hasSpaceFor(item)) {
                 sendMessage(player, "Gigos cannot carry any more.")
                 return@onUseWith true

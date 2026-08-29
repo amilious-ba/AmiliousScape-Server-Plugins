@@ -14,6 +14,7 @@ object MonkeyConfig {
     const val HUNGER_BANANA = 25
     const val HUNGER_THROW = 8
     const val HUNGER_LOOT = 1
+    const val HUNGER_B2B = 5
 
     const val ATTR_OWNED = "/save:amilious_monkey_owned"
     const val ATTR_ACTIVE = "amilious_monkey"
@@ -21,4 +22,6 @@ object MonkeyConfig {
     const val ATTR_LOOT = "/save:amilious_monkey_loot"
     const val ATTR_HUNGER = "/save:amilious_gigos_hunger"
     const val ATTR_DUNG = "/save:amilious_monkey_dung"
+    const val ATTR_EAT = "/save:amilious_monkey_eat"
+    const val ATTR_B2B = "/save:amilious_monkey_b2b"
 }

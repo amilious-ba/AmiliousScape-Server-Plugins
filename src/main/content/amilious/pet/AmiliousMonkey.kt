@@ -22,9 +22,13 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     val bag = Container(MonkeyConfig.BOB_SIZE)
     private var dungWait = 0
     private var lootBusy = false
+    private var lootPause = 0
     private var eatWait = 0
 
     private fun dungEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_DUNG, true)
+    private fun eatEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_EAT, true)
+    private fun b2bEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_B2B, true)
+    private fun lootEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_LOOT, true)
 
     fun hunger(): Int = owner.getAttribute(MonkeyConfig.ATTR_HUNGER, MonkeyConfig.HUNGER_MAX)
 
@@ -41,7 +45,6 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         owner.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)?.let { old ->
             if (old !== this) old.dismiss()
         }
-
         try {
             val locals = RegionManager.getLocalNpcs(owner, 64)
             for (npc in locals) {
@@ -51,7 +54,6 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
             }
         } catch (_: Exception) {
         }
-
         location = owner.location.transform(1, 0, 0)
         init()
         name = "Gigos"
@@ -97,12 +99,14 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
             return
         }
         if (dungWait > 0) dungWait--
+        if (lootPause > 0) lootPause--
         if (location.getDistance(owner.location) > MonkeyConfig.FOLLOW_DIST) {
             properties.teleportLocation = owner.location
         }
         tryLoot()
         tryDung()
-        tryFeed()
+        tryEat()
+        tryBonesToBananas()
         if (!pulseManager.hasPulseRunning()) {
             followOwner()
         }
@@ -154,8 +158,6 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         })
     }
 
-    private fun lootEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_LOOT, true)
-
     private fun isOwnerDrop(gi: GroundItem): Boolean {
         if (gi.isRemoved) return false
         if (gi.droppedBy(owner)) return true
@@ -167,6 +169,30 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         if (gi.isRemoved) return false
         if (gi.id == MonkeyConfig.BANANA_ID) return true
         return isOwnerDrop(gi)
+    }
+
+    private fun scoopTile(tile: core.game.world.map.Location): Boolean {
+        val here = GroundItemManager.getItems()
+            .filter { !it.isRemoved && it.location == tile }
+            .filter { canTake(it) }
+        var any = false
+        for (gi in here) {
+            if (hunger() < MonkeyConfig.HUNGER_LOOT) break
+            if (bag.freeSlots() <= 0) break
+            val copy = Item(gi.id, gi.amount)
+            if (!bag.hasSpaceFor(copy)) continue
+            if (bag.add(copy)) {
+                GroundItemManager.destroy(gi)
+                addHunger(-MonkeyConfig.HUNGER_LOOT)
+                any = true
+                sendMessage(owner, "Gigos scoops up the ${copy.name.lowercase()}.")
+            }
+        }
+        if (any) {
+            saveBag()
+            GigosHudPacket.send(owner, this)
+        }
+        return true
     }
 
     private fun tryLoot() {
@@ -182,42 +208,20 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         val first = piles.minByOrNull { it.location.getDistance(location) } ?: return
         val tile = first.location
 
-        fun scoopTile(): Boolean {
-            val here = GroundItemManager.getItems()
-                .filter { !it.isRemoved && it.location == tile }
-                .filter { canTake(it) }
-            var any = false
-            for (gi in here) {
-                if (hunger() < MonkeyConfig.HUNGER_LOOT) break
-                if (bag.freeSlots() <= 0) break
-                val copy = Item(gi.id, gi.amount)
-                if (!bag.hasSpaceFor(copy)) continue
-                if (bag.add(copy)) {
-                    GroundItemManager.destroy(gi)
-                    addHunger(-MonkeyConfig.HUNGER_LOOT)
-                    any = true
-                    sendMessage(owner, "Gigos scoops up the ${copy.name.lowercase()}.")
+        if (location.getDistance(tile) > 1.0) {
+            lootBusy = true
+            lootPause = 0
+            pulseManager.run(object : MovementPulse(this, tile) {
+                override fun pulse(): Boolean {
+                    lootBusy = false
+                    lootPause = 2
+                    return true
                 }
-            }
-            if (any) {
-                saveBag()
-                GigosHudPacket.send(owner, this@AmiliousMonkey)
-            }
-            return true
-        }
-
-        if (location.getDistance(tile) <= 1.5) {
-            scoopTile()
+            })
             return
         }
-
-        lootBusy = true
-        pulseManager.run(object : MovementPulse(this, tile) {
-            override fun pulse(): Boolean {
-                lootBusy = false
-                return scoopTile()
-            }
-        })
+        if (lootPause > 0) return
+        scoopTile(tile)
     }
 
     private fun tryDung() {
@@ -231,7 +235,6 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
                         it.properties.combatPulse.isAttacking
             } ?: return
         if (victim === owner || victim === this) return
-        if (victim === owner || victim === this || !victim.isActive) return
         if (location.getDistance(victim.location) > 8) return
         dungWait = MonkeyConfig.DUNG_COOLDOWN
         addHunger(-MonkeyConfig.HUNGER_THROW)
@@ -244,32 +247,34 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         sendMessage(owner, "Gigos flings something foul. ${victim.name} looks furious.")
     }
 
-    private fun tryFeed() {
+    private fun tryEat() {
+        if (!eatEnabled()) return
         if (eatWait > 0) {
             eatWait--
             return
         }
         if (hunger() >= 30) return
+        if (bag.toArray().none { it != null && it.id == MonkeyConfig.BANANA_ID }) return
+        if (!bag.remove(Item(MonkeyConfig.BANANA_ID, 1))) return
+        addHunger(MonkeyConfig.HUNGER_BANANA)
+        saveBag()
+        GigosHudPacket.send(owner, this)
+        sendMessage(owner, "Gigos eats a banana.")
+        eatWait = 5
+    }
 
-        fun eatBanana(): Boolean {
-            if (bag.toArray().none { it != null && it.id == MonkeyConfig.BANANA_ID }) return false
-            if (!bag.remove(Item(MonkeyConfig.BANANA_ID, 1))) return false
-            addHunger(MonkeyConfig.HUNGER_BANANA)
-            saveBag()
-            GigosHudPacket.send(owner, this)
-            sendMessage(owner, "Gigos eats a banana.")
-            eatWait = 5
-            return true
-        }
-
-        if (eatBanana()) return
-
+    private fun tryBonesToBananas() {
+        if (!b2bEnabled()) return
+        if (hunger() < MonkeyConfig.HUNGER_B2B) return
+        if (bag.toArray().any { it != null && it.id == MonkeyConfig.BANANA_ID }) return
         val bone = bag.toArray().firstOrNull { it != null && isBone(it) } ?: return
         if (!bag.remove(Item(bone.id, 1))) return
         bag.add(Item(MonkeyConfig.BANANA_ID, 1))
+        addHunger(-MonkeyConfig.HUNGER_B2B)
         graphics(Graphics(141))
+        saveBag()
+        GigosHudPacket.send(owner, this)
         sendMessage(owner, "Gigos turns the ${bone.name.lowercase()} into a banana.")
-        eatBanana()
     }
 
     private fun isBone(item: Item): Boolean {

@@ -40,6 +40,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
 
         location = owner.location.transform(1, 0, 0)
         init()
+        skills.lifepoints = 100
         name = "Gigos"
         isWalks = true
         interaction.set(Option("Pack", 0))

@@ -1,8 +1,11 @@
 package content.amilious.pet
 
+import core.api.InputType
+import core.api.sendInputDialogue
 import core.api.sendMessage
 import core.game.container.Container
 import core.game.interaction.InterfaceListener
+import core.game.node.entity.player.Player
 import core.game.node.item.Item
 import core.plugin.Initializable
 import kotlin.math.min
@@ -18,7 +21,7 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             if (invItem.id == MonkeyConfig.BANANA_ID) return@on true
             val want = amountFor(opcode)
             if (want < 0) {
-                sendMessage(player, "Store-X not wired yet. Use Store-1/5/10/All.")
+                askAmount(player, player.inventory, live.bag, invItem.id, live)
                 return@on true
             }
             val moved = transfer(player.inventory, live.bag, invItem.id, want)
@@ -37,7 +40,7 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             val bagItem = live.bag.get(slot) ?: return@on true
             val want = amountFor(opcode)
             if (want < 0) {
-                sendMessage(player, "Withdraw-X not wired yet. Use Withdraw-1/5/10/All.")
+                askAmount(player, live.bag, player.inventory, bagItem.id, live)
                 return@on true
             }
             val moved = transfer(live.bag, player.inventory, bagItem.id, want)
@@ -48,6 +51,30 @@ class AmiliousMonkeyBagUi : InterfaceListener {
                 live.openBagUi()
             }
             true
+        }
+    }
+
+    private fun askAmount(
+        player: Player,
+        from: Container,
+        to: Container,
+        id: Int,
+        live: AmiliousMonkey
+    ) {
+        sendInputDialogue(player, InputType.AMOUNT, "Enter the amount:") { value ->
+            val n = when (value) {
+                is Int -> value
+                is Number -> value.toInt()
+                else -> value.toString().toIntOrNull() ?: 0
+            }
+            if (n <= 0) return@sendInputDialogue
+            val moved = transfer(from, to, id, n)
+            if (moved == 0) {
+                sendMessage(player, "Could not move that many.")
+            } else {
+                live.saveBag()
+                live.openBagUi()
+            }
         }
     }
 

@@ -5,6 +5,7 @@ import content.amilious.pet.GigosHudPacket
 import content.amilious.pet.MonkeyConfig
 import core.api.sendMessage
 import core.game.node.entity.combat.ImpactHandler
+import core.game.node.entity.impl.Projectile
 import core.game.world.map.RegionManager
 import core.game.world.update.flag.context.Graphics
 
@@ -34,6 +35,11 @@ class ThrowDungAction : CompanionAction<AmiliousMonkey> {
         dungWait = MonkeyConfig.DUNG_COOLDOWN
         m.addHunger(-MonkeyConfig.HUNGER_THROW)
         m.face(victim)
+        m.animate(m.properties.attackAnimation)
+        try {
+            Projectile.create(m, victim, 130).send()
+        } catch (_: Exception) {
+        }
         victim.graphics(Graphics(30))
         val hit = 1 + (Math.random() * 3).toInt()
         victim.impactHandler.manualHit(m, hit, ImpactHandler.HitsplatType.NORMAL)

@@ -7,6 +7,7 @@ import content.amilious.pet.actions.FollowIdleAction
 import content.amilious.pet.actions.FollowIfFarAction
 import content.amilious.pet.actions.LootAction
 import content.amilious.pet.actions.ThrowDungAction
+import content.amilious.pet.actions.WanderAction
 import core.api.sendMessage
 import core.game.component.CloseEvent
 import core.game.component.Component
@@ -37,6 +38,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
             .addAction(BonesToBananasAction())
             .addAction(LootAction())
             .addAction(ThrowDungAction())
+            .addAction(WanderAction())
             .addAction(FollowIdleAction())
     }
 

@@ -262,6 +262,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         val bone = bag.toArray().firstOrNull { it != null && isBone(it) } ?: return
         if (!bag.remove(Item(bone.id, 1))) return
         bag.add(Item(MonkeyConfig.BANANA_ID, 1))
+        graphics(Graphics(141))
         sendMessage(owner, "Gigos turns the ${bone.name.lowercase()} into a banana.")
         eatBanana()
     }

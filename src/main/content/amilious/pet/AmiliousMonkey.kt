@@ -6,6 +6,7 @@ import core.game.component.Component
 import core.game.container.Container
 import core.game.container.access.InterfaceContainer
 import core.game.interaction.MovementPulse
+import core.game.interaction.Option
 import core.game.node.entity.combat.ImpactHandler
 import core.game.node.entity.npc.NPC
 import core.game.node.entity.player.Player
@@ -14,7 +15,6 @@ import core.game.node.item.GroundItemManager
 import core.game.node.item.Item
 import core.game.world.map.RegionManager
 import core.game.world.update.flag.context.Graphics
-import core.game.interaction.Option
 
 class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
 
@@ -31,12 +31,20 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         interaction.set(Option("Loot", 1))
         loadBag()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
+        NpcMenuPacket.send(
+            owner,
+            this,
+            "Gigos",
+            0 to "Pack",
+            1 to "Loot"
+        )
         sendMessage(owner, "Gigos hops down beside you.")
         followOwner()
     }
 
     fun dismiss() {
         saveBag()
+        NpcMenuPacket.clear(owner, this)
         owner.removeAttribute(MonkeyConfig.ATTR_ACTIVE)
         clear()
         sendMessage(owner, "Gigos scurries off. His pack is safe. ::monkey to call him back.")

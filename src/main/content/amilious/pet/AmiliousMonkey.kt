@@ -14,8 +14,8 @@ import core.game.node.item.GroundItem
 import core.game.node.item.GroundItemManager
 import core.game.node.item.Item
 import core.game.world.map.RegionManager
-import core.game.world.update.flag.context.Graphics
 import core.game.world.repository.Repository
+import core.game.world.update.flag.context.Graphics
 
 class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
 
@@ -43,7 +43,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         }
 
         try {
-            val locals = core.game.world.map.RegionManager.getLocalNpcs(owner, 64)
+            val locals = RegionManager.getLocalNpcs(owner, 64)
             for (npc in locals) {
                 if (npc !== this && npc is AmiliousMonkey && npc.owner == owner) {
                     npc.dismiss()
@@ -163,6 +163,12 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         return false
     }
 
+    private fun canTake(gi: GroundItem): Boolean {
+        if (gi.isRemoved) return false
+        if (gi.id == MonkeyConfig.BANANA_ID) return true
+        return isOwnerDrop(gi)
+    }
+
     private fun tryLoot() {
         if (lootBusy) return
         if (!lootEnabled()) return
@@ -171,7 +177,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
 
         val piles = GroundItemManager.getItems()
             .filter { !it.isRemoved && it.location.getDistance(location) <= MonkeyConfig.LOOT_RANGE }
-            .filter { isOwnerDrop(it) }
+            .filter { canTake(it) }
             .filter { bag.hasSpaceFor(Item(it.id, it.amount)) }
         val first = piles.minByOrNull { it.location.getDistance(location) } ?: return
         val tile = first.location
@@ -179,7 +185,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         fun scoopTile(): Boolean {
             val here = GroundItemManager.getItems()
                 .filter { !it.isRemoved && it.location == tile }
-                .filter { isOwnerDrop(it) }
+                .filter { canTake(it) }
             var any = false
             for (gi in here) {
                 if (hunger() < MonkeyConfig.HUNGER_LOOT) break
@@ -225,13 +231,14 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
                         it.properties.combatPulse.isAttacking
             } ?: return
         if (victim === owner || victim === this) return
+        if (victim === owner || victim === this || !victim.isActive) return
         if (location.getDistance(victim.location) > 8) return
         dungWait = MonkeyConfig.DUNG_COOLDOWN
         addHunger(-MonkeyConfig.HUNGER_THROW)
         face(victim)
         victim.graphics(Graphics(30))
         val hit = 1 + (Math.random() * 3).toInt()
-        victim.impactHandler.manualHit(this, hit, core.game.node.entity.combat.ImpactHandler.HitsplatType.NORMAL)
+        victim.impactHandler.manualHit(this, hit, ImpactHandler.HitsplatType.NORMAL)
         victim.properties.combatPulse.attack(this)
         GigosHudPacket.send(owner, this)
         sendMessage(owner, "Gigos flings something foul. ${victim.name} looks furious.")
@@ -245,9 +252,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         if (hunger() >= 30) return
 
         fun eatBanana(): Boolean {
-            val slot = bag.toArray().indexOfFirst { it != null && it.id == MonkeyConfig.BANANA_ID }
-            if (slot < 0) return false
-            val it = bag.get(slot) ?: return false
+            if (bag.toArray().none { it != null && it.id == MonkeyConfig.BANANA_ID }) return false
             if (!bag.remove(Item(MonkeyConfig.BANANA_ID, 1))) return false
             addHunger(MonkeyConfig.HUNGER_BANANA)
             saveBag()
@@ -271,5 +276,4 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         val n = item.name.lowercase()
         return n == "bones" || n.endsWith(" bones") || n == "bone"
     }
-
 }

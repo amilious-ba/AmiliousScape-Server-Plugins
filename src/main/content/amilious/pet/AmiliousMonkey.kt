@@ -15,6 +15,7 @@ import core.game.node.item.GroundItemManager
 import core.game.node.item.Item
 import core.game.world.map.RegionManager
 import core.game.world.update.flag.context.Graphics
+import core.game.world.repository.Repository
 
 class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
 
@@ -23,17 +24,26 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     private var lootBusy = false
 
     fun spawnAtOwner() {
-        val old = owner.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-        if (old != null && old !== this) {
-            old.dismiss()
+        owner.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)?.let { old ->
+            if (old !== this) old.dismiss()
         }
+
+        try {
+            val locals = core.game.world.map.RegionManager.getLocalNpcs(owner, 64)
+            for (npc in locals) {
+                if (npc !== this && npc is AmiliousMonkey && npc.owner == owner) {
+                    npc.dismiss()
+                }
+            }
+        } catch (_: Exception) {
+        }
+
         location = owner.location.transform(1, 0, 0)
         init()
         name = "Gigos"
         isWalks = true
         interaction.set(Option("Pack", 0))
-        interaction.set(Option("Loot", 1))
-        interaction.set(Option("Dismiss", 2))
+        interaction.set(Option("Talk-to", 1))
         loadBag()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
         NpcMenuPacket.send(
@@ -56,7 +66,10 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     }
 
     fun tickCompanion() {
-        if (!owner.isActive) {
+        val gone = !owner.isActive
+                || owner.session == null
+                || Repository.getPlayerByName(owner.name) == null
+        if (gone) {
             dismiss()
             return
         }

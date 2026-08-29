@@ -24,23 +24,17 @@ object NpcMenuPacket {
         options: Array<out Pair<Int, String>>
     ) {
         val session = player.session ?: return
-
-        val payload = IoBuffer()
-        payload.p2(npc.index)
-        payload.p2(npc.id)
-        payload.p1(flags)
-        payload.putString(displayName)
-        payload.p1(options.size)
+        val buf = IoBuffer(OPCODE, PacketHeader.BYTE)
+        buf.p2(npc.index)
+        buf.p2(npc.id)
+        buf.p1(flags)
+        buf.putString(displayName)
+        buf.p1(options.size)
         for ((slot, text) in options) {
-            payload.p1(slot)
-            payload.putString(text)
+            buf.p1(slot)
+            buf.putString(text)
         }
-        val n = payload.toByteBuffer().position()
-
-        val buf = IoBuffer(OPCODE, PacketHeader.NORMAL)
-        buf.p1(n)
-        payload.toByteBuffer().flip()
-        buf.put(payload.toByteBuffer())
+        buf.setPacketSize(buf.toByteBuffer().position())
         buf.cypherOpcode(session.isaacPair.output)
         session.write(buf)
     }

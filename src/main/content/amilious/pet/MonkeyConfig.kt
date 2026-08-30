@@ -23,6 +23,8 @@ object MonkeyConfig {
     const val HUNGER_PICK = 2
     const val HUNGER_FEED = 4
 
+    const val UNBURDEN_FREE = 4   // start taking when you have this many empty slots or fewer
+
     const val ATTR_DRUNK = "amilious_gigos_drunk" // ticks remaining, not saved
     const val DRUNK_BEER = 50
     const val ATTR_OWNED = "/save:amilious_monkey_owned"
@@ -34,4 +36,6 @@ object MonkeyConfig {
     const val ATTR_EAT = "/save:amilious_monkey_eat"
     const val ATTR_B2B = "/save:amilious_monkey_b2b"
     const val ATTR_FEED = "/save:amilious_monkey_feed"
+    const val ATTR_PICK = "/save:amilious_monkey_pick"
+    const val ATTR_UNBURDEN = "/save:amilious_monkey_unburden"
 }

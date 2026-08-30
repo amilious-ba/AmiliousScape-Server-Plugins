@@ -20,6 +20,8 @@ object GigosHudPacket {
         val eatOn = player.getAttribute(MonkeyConfig.ATTR_EAT, true)
         val b2bOn = player.getAttribute(MonkeyConfig.ATTR_B2B, true)
         val feedOn = player.getAttribute(MonkeyConfig.ATTR_FEED, true)
+        val pickOn = player.getAttribute(MonkeyConfig.ATTR_PICK, true)
+        val unburdenOn = player.getAttribute(MonkeyConfig.ATTR_UNBURDEN, true)
         val buf = IoBuffer(OPCODE, PacketHeader.BYTE)
         buf.p1(1)
         buf.p2(monkey.hunger().coerceIn(0, 65535))
@@ -27,7 +29,7 @@ object GigosHudPacket {
         buf.putString("Gigos")
         buf.p2(monkey.bananaCount().coerceIn(0, 65535))
         buf.putString(monkey.brainActionName())
-        buf.p1(5) //<- number of toggles
+        buf.p1(7)
         buf.p1(2)
         buf.p1(if (lootOn) 1 else 0)
         buf.putString("Autoloot")
@@ -43,6 +45,12 @@ object GigosHudPacket {
         buf.p1(7)
         buf.p1(if (feedOn) 1 else 0)
         buf.putString("Feed")
+        buf.p1(8)
+        buf.p1(if (pickOn) 1 else 0)
+        buf.putString("Forage")
+        buf.p1(9)
+        buf.p1(if (unburdenOn) 1 else 0)
+        buf.putString("Unburden")
         player.session.write(buf)
     }
 }

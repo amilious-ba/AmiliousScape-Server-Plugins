@@ -39,6 +39,7 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (cool > 0) return false
+        if (!actor.pickEnabled()) return false
         if (idleTicks < IDLE_NEED) return false
         if (actor.hunger() < MonkeyConfig.HUNGER_PICK) return false
         if (actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) return false

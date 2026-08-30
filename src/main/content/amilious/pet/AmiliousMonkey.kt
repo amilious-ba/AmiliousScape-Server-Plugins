@@ -9,6 +9,7 @@ import content.amilious.pet.actions.FollowIfFarAction
 import content.amilious.pet.actions.LootAction
 import content.amilious.pet.actions.PickBananaTreeAction
 import content.amilious.pet.actions.ThrowDungAction
+import content.amilious.pet.actions.UnburdenAction
 import content.amilious.pet.actions.WanderAction
 import core.api.sendMessage
 import core.game.component.CloseEvent
@@ -42,6 +43,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         brain
             .addAction(FollowIfFarAction())
             .addAction(FeedOwnerAction())
+            .addAction(UnburdenAction())
             .addAction(PickBananaTreeAction())
             .addAction(EatBananaAction())
             .addAction(BonesToBananasAction())
@@ -143,6 +145,26 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
             4 to "Dismiss"
         )
         GigosHudPacket.send(owner, this)
+    }
+
+    fun pickEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_PICK, true)
+    fun unburdenEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_UNBURDEN, true)
+
+    fun ownerGathering(): Boolean {
+        if (ownerInCombat()) return false
+        if (owner.pulseManager.hasPulseRunning()) return true
+        val anim = owner.animator?.animation?.id ?: return false
+        return anim in GATHER_ANIMS
+    }
+
+    companion object {
+        private val GATHER_ANIMS = intArrayOf(
+            625, 626, 627, // mine
+            875, 877, 879, // woodcut
+            621, 622, 623, // fish
+            893,           // shear
+            2273, 2282     // farm / harvest-ish (try; drop if wrong)
+        )
     }
 
     fun drunkTicks(): Int = owner.getAttribute(MonkeyConfig.ATTR_DRUNK, 0)

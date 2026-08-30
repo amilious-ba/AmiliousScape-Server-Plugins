@@ -89,6 +89,21 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         followOwner()
     }
 
+    fun takeNonBananasToOwner(): Int {
+        var moved = 0
+        for (item in bag.toArray()) {
+            if (item == null) continue
+            if (isBananaItem(item)) continue
+            val copy = Item(item.id, item.amount)
+            if (!owner.inventory.hasSpaceFor(copy)) break
+            if (bag.remove(copy) && owner.inventory.add(copy)) {
+                moved += copy.amount
+            }
+        }
+        if (moved > 0) saveBag()
+        return moved
+    }
+
     fun refreshMenu() {
         val lootOn = owner.getAttribute(MonkeyConfig.ATTR_LOOT, true)
         NpcMenuPacket.send(

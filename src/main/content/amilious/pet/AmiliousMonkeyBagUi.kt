@@ -14,7 +14,6 @@ import kotlin.math.min
 class AmiliousMonkeyBagUi : InterfaceListener {
 
     override fun defineInterfaceListeners() {
-
         on(665, 0) { player, _, opcode, _, slot, _ ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
                 ?: return@on true
@@ -50,6 +49,20 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             }
             true
         }
+
+        on(662, 7) { player, _, _, _, _, _ -> takeBob(player) }
+        on(662, 11) { player, _, _, _, _, _ -> takeBob(player) }
+        on(747, 7) { player, _, _, _, _, _ -> takeBob(player) }
+        on(747, 18) { player, _, _, _, _, _ -> takeBob(player) }
+    }
+
+    private fun takeBob(player: Player): Boolean {
+        val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+            ?: return true
+        val n = live.takeNonBananasToOwner()
+        if (n == 0) sendMessage(player, "Gigos has nothing to give (bananas stay).")
+        else sendMessage(player, "You take items from Gigos' pack.")
+        return true
     }
 
     private fun askAmount(

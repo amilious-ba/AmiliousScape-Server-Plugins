@@ -12,7 +12,7 @@ import core.game.world.map.Location
 
 class LootAction : CompanionAction<AmiliousMonkey> {
 
-    private enum class Phase { WALK, WAIT, SCOOP }
+    private enum class Phase { WALK, WAIT, SCOOP, HOLD }
 
     private var phase = Phase.WALK
     private var tile: Location? = null
@@ -58,9 +58,9 @@ class LootAction : CompanionAction<AmiliousMonkey> {
                 if (lootBusy && !actor.pulseManager.hasPulseRunning()) {
                     lootBusy = false
                 }
-                if (actor.location.getDistance(dest) <= 1.0) {
+                if (actor.location.getDistance(dest) <= 0.75) {
                     phase = Phase.WAIT
-                    wait = 2
+                    wait = 3
                     lootBusy = false
                     return true
                 }
@@ -78,13 +78,27 @@ class LootAction : CompanionAction<AmiliousMonkey> {
             Phase.WAIT -> {
                 wait--
                 if (wait > 0) return true
+                if (actor.location.getDistance(dest) > 0.75) {
+                    phase = Phase.WALK
+                    return true
+                }
                 phase = Phase.SCOOP
                 return true
             }
             Phase.SCOOP -> {
+                if (actor.location.getDistance(dest) > 0.75) {
+                    phase = Phase.WALK
+                    return true
+                }
                 scoop(actor, dest)
+                phase = Phase.HOLD
+                wait = 4
                 lootBusy = false
-                return false
+                return true
+            }
+            Phase.HOLD -> {
+                wait--
+                return wait > 0
             }
         }
     }

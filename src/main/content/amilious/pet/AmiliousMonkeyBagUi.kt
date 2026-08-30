@@ -32,6 +32,11 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             true
         }
 
+        on(671) { player, component, opcode, button, slot, itemId ->
+            sendMessage(player, "671 component=$component opcode=$opcode button=$button slot=$slot item=$itemId")
+            false
+        }
+
         on(671, 27) { player, _, opcode, _, slot, _ ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
                 ?: return@on false

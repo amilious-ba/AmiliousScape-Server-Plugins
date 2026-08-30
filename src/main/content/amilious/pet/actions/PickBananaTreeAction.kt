@@ -15,9 +15,8 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
     private enum class Phase { WALK, PICK, HOLD }
 
     private var phase = Phase.WALK
-    private var dest: Location? = null
+    private var target: Scenery? = null
     private var wait = 0
-    private var walking = false
     private var cool = 0
     private var lastOwner = Location.create(0, 0, 0)
     private var idleTicks = 0
@@ -46,36 +45,29 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
     }
 
     override fun start(actor: AmiliousMonkey) {
-        dest = nearest(actor)?.location
+        target = nearest(actor)
         phase = Phase.WALK
         wait = 0
-        walking = false
         picksOnThis = 0
+        sendMessage(actor.owner, "Gigos heads for a banana tree.")
+        walkTo(actor)
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
-        val tile = dest ?: return false
+        val tree = target ?: return false
         when (phase) {
             Phase.WALK -> {
-                if (actor.location.getDistance(tile) <= 1.5) {
+                if (actor.location.getDistance(tree.location) <= 2.0) {
                     phase = Phase.PICK
                     return true
                 }
-                if (!walking) {
-                    walking = true
-                    actor.pulseManager.run(object : MovementPulse(actor, tile) {
-                        override fun pulse(): Boolean {
-                            walking = false
-                            return true
-                        }
-                    })
-                }
-                if (walking && !actor.pulseManager.hasPulseRunning()) walking = false
+                if (!actor.pulseManager.hasPulseRunning()) walkTo(actor)
                 return true
             }
             Phase.PICK -> {
-                if (actor.location.getDistance(tile) > 1.5) {
+                if (actor.location.getDistance(tree.location) > 2.0) {
                     phase = Phase.WALK
+                    walkTo(actor)
                     return true
                 }
                 if (!actor.addBananasNoted(1)) {
@@ -88,41 +80,51 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
                 sendMessage(actor.owner, "Gigos picks a banana.")
                 actor.animate(Animation(827))
                 picksOnThis++
-                walking = false
                 if (picksOnThis >= PICKS_PER_TREE) {
-                    rest[tile] = TREE_REST
-                    dest = nearest(actor)?.location
+                    rest[tree.location] = TREE_REST
+                    target = nearest(actor)
                     picksOnThis = 0
-                    if (dest == null) {
+                    if (target == null) {
                         cool = 8
                         return false
                     }
                     phase = Phase.WALK
+                    walkTo(actor)
                     return true
                 }
                 phase = Phase.HOLD
                 wait = if (idleTicks >= 8) 2 else 5
-                cool = if (idleTicks >= 8) 1 else 6
                 return true
             }
             Phase.HOLD -> {
                 wait--
-                return wait > 0
+                if (wait > 0) return true
+                phase = Phase.PICK
+                return true
             }
         }
     }
 
+    private fun walkTo(actor: AmiliousMonkey) {
+        val tree = target ?: return
+        actor.pulseManager.clear()
+        actor.pulseManager.run(object : MovementPulse(actor, tree) {
+            override fun pulse(): Boolean = true
+        })
+    }
+
     private fun nearest(actor: AmiliousMonkey): Scenery? {
         val origin = actor.location
+        val z = origin.z
         var best: Scenery? = null
         var bestDist = RANGE
         for (dx in -RANGE.toInt()..RANGE.toInt()) {
             for (dy in -RANGE.toInt()..RANGE.toInt()) {
-                val loc = origin.transform(dx, dy, 0)
+                val loc = Location.create(origin.x + dx, origin.y + dy, z)
                 if (rest.containsKey(loc)) continue
-                val obj = RegionManager.getObject(loc) ?: continue
-                if (obj.id !in PICKABLE) continue
-                val d = origin.getDistance(loc)
+                val obj = RegionManager.getObject(z, loc.x, loc.y) ?: continue
+                if (!isTree(obj)) continue
+                val d = origin.getDistance(obj.location)
                 if (d < bestDist) {
                     bestDist = d
                     best = obj
@@ -130,6 +132,13 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
             }
         }
         return best
+    }
+
+    private fun isTree(obj: Scenery): Boolean {
+        if (obj.id == 2078) return false
+        if (obj.id in PICKABLE) return true
+        val n = obj.name.lowercase()
+        return n.contains("banana") && n.contains("tree")
     }
 
     companion object {

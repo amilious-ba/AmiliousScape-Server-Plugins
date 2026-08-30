@@ -30,6 +30,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     private var lastOwnerX = Int.MIN_VALUE
     private var lastOwnerY = Int.MIN_VALUE
     private var lastOwnerHp = -1
+    private var lastHudAction = ""
 
     private val brain = CompanionBrain(this)
 
@@ -134,6 +135,11 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         }
         noteOwnerIdle()
         brain.tick()
+        val name = brain.currentName()
+        if (name != lastHudAction) {
+            lastHudAction = name
+            GigosHudPacket.send(owner, this)
+        }
     }
 
     fun saveBag() {

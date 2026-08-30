@@ -4,6 +4,8 @@ import core.api.sendMessage
 import core.api.setAttribute
 import core.game.interaction.IntType
 import core.game.interaction.InteractionListener
+import core.game.node.Node
+import core.game.node.entity.player.Player
 import core.game.node.item.Item
 import core.plugin.Initializable
 
@@ -53,30 +55,11 @@ class AmiliousMonkeyListener : InteractionListener {
             true
         }
 
-        onUseWith(IntType.NPC, MonkeyConfig.BANANA_ID, *ids) { player, _, with ->
-            val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-            if (live == null || with !== live) {
-                sendMessage(player, "That is not your monkey.")
-                return@onUseWith true
-            }
-            val banana = Item(MonkeyConfig.BANANA_ID, 1)
-            if (live.hunger() >= MonkeyConfig.HUNGER_MAX) {
-                if (!live.bag.hasSpaceFor(banana)) {
-                    sendMessage(player, "Gigos is full and his pack has no room.")
-                    return@onUseWith true
-                }
-                if (player.inventory.remove(banana) && live.addBananasNoted(1)) {
-                    live.saveBag()
-                    sendMessage(player, "Gigos stores the banana for later.")
-                }
-                return@onUseWith true
-            }
-            if (player.inventory.remove(banana)) {
-                live.addHunger(MonkeyConfig.HUNGER_BANANA)
-                GigosHudPacket.send(player, live)
-                sendMessage(player, "Gigos grabs the banana. Ook!")
-            }
-            true
+        onUseWith(IntType.NPC, MonkeyConfig.BANANA_ID, *ids) { player, used, with ->
+            useBanana(player, used.id, with)
+        }
+        onUseWith(IntType.NPC, 1964, *ids) { player, used, with ->
+            useBanana(player, used.id, with)
         }
 
         onUseWith(IntType.NPC, Int.MAX_VALUE, *ids) { player, used, with ->
@@ -84,7 +67,7 @@ class AmiliousMonkeyListener : InteractionListener {
             if (live == null || with !== live) {
                 return@onUseWith false
             }
-            if (used.id == MonkeyConfig.BANANA_ID) {
+            if (live.isBananaItem(Item(used.id, 1))) {
                 return@onUseWith false
             }
             val item = Item(used.id, 1)
@@ -98,5 +81,28 @@ class AmiliousMonkeyListener : InteractionListener {
             }
             true
         }
+    }
+
+    private fun useBanana(player: Player, usedId: Int, with: Node): Boolean {
+        val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+        if (live == null || with !== live) {
+            sendMessage(player, "That is not your monkey.")
+            return true
+        }
+        val one = Item(usedId, 1)
+        if (live.hunger() >= MonkeyConfig.HUNGER_MAX) {
+            if (!player.inventory.remove(one)) return true
+            if (live.addBananasNoted(1)) {
+                live.saveBag()
+                sendMessage(player, "Gigos stores the banana for later.")
+            }
+            return true
+        }
+        if (player.inventory.remove(one)) {
+            live.addHunger(MonkeyConfig.HUNGER_BANANA)
+            GigosHudPacket.send(player, live)
+            sendMessage(player, "Gigos grabs the banana. Ook!")
+        }
+        return true
     }
 }

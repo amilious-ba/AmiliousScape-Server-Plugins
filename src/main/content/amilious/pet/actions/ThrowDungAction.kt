@@ -11,7 +11,6 @@ import core.game.world.update.flag.context.Graphics
 
 class ThrowDungAction : CompanionAction<AmiliousMonkey> {
     private var dungWait = 0
-
     private var phase = 0
     private var pending: core.game.node.entity.npc.NPC? = null
 
@@ -46,26 +45,17 @@ class ThrowDungAction : CompanionAction<AmiliousMonkey> {
                 dungWait = MonkeyConfig.DUNG_COOLDOWN
                 actor.addHunger(-MonkeyConfig.HUNGER_THROW)
                 actor.face(victim)
-                actor.animate(actor.properties.attackAnimation)
-                GigosHudPacket.send(actor.owner, actor)
-                phase = 1
-                return true
-            }
-            1, 2 -> {
-                phase++
-                return true
-            }
-            3 -> {
-                val victim = pending ?: return false
                 try {
                     Projectile.create(actor, victim, 130).send()
                 } catch (_: Exception) {
                 }
-                phase = 4
+                GigosHudPacket.send(actor.owner, actor)
+                phase = 1
                 return true
             }
-            4, 5 -> {
-                phase++
+            1 -> {
+                actor.animate(actor.properties.attackAnimation)
+                phase = 2
                 return true
             }
             else -> {
@@ -81,5 +71,4 @@ class ThrowDungAction : CompanionAction<AmiliousMonkey> {
             }
         }
     }
-
 }

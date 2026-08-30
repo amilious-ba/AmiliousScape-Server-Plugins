@@ -15,6 +15,32 @@ class AmiliousMonkeyBagUi : InterfaceListener {
 
     override fun defineInterfaceListeners() {
 
+        on(219, 3) { player, _, opcode, _, _, _ ->
+            if (opcode != 155) return@on false
+            val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+                ?: return@on false
+            val n = live.depositBagToBank(keepBananas = true)
+            sendMessage(
+                player,
+                if (n == 0) "Gigos has nothing to deposit (bananas stay)."
+                else "Gigos banks his pack. Bananas stay with him."
+            )
+            true
+        }
+
+        on(228, 3) { player, _, opcode, _, _, _ ->
+            if (opcode != 155) return@on false
+            val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+                ?: return@on false
+            val n = live.depositBagToBank(keepBananas = true)
+            sendMessage(
+                player,
+                if (n == 0) "Gigos has nothing to deposit (bananas stay)."
+                else "Gigos banks his pack. Bananas stay with him."
+            )
+            true
+        }
+
         on(665, 0) { player, _, opcode, _, slot, _ ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
                 ?: return@on true

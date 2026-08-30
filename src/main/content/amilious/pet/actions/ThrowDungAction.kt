@@ -51,7 +51,7 @@ class ThrowDungAction : CompanionAction<AmiliousMonkey> {
                         actor,
                         victim,
                         130,   // gfx
-                        18,    // startHeight — try 12–20
+                        12,    // startHeight — try 12–20
                         20,    // endHeight on the target
                         41,    // delay
                         60,    // speed

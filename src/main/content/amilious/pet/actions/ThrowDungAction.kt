@@ -47,7 +47,17 @@ class ThrowDungAction : CompanionAction<AmiliousMonkey> {
                 actor.addHunger(-MonkeyConfig.HUNGER_THROW)
                 actor.face(victim)
                 try {
-                    Projectile.create(actor, victim, 130).send()
+                    Projectile.create(
+                        actor,
+                        victim,
+                        130,   // gfx
+                        18,    // startHeight — try 12–20
+                        20,    // endHeight on the target
+                        41,    // delay
+                        60,    // speed
+                        5,     // angle
+                        11     // distance offset
+                    ).send()
                 } catch (_: Exception) {
                 }
                 GigosHudPacket.send(actor.owner, actor)

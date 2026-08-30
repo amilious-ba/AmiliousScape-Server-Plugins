@@ -18,14 +18,27 @@ class LootAction : CompanionAction<AmiliousMonkey> {
     private var tile: Location? = null
     private var wait = 0
     private var lootBusy = false
+    private var fullWait = 0
 
     override fun name() = "loot"
+
+    override fun cooldown(actor: AmiliousMonkey) {
+        if (fullWait > 0) fullWait--
+    }
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (!actor.lootEnabled() || lootBusy) return false
         if (actor.hunger() < MonkeyConfig.HUNGER_LOOT) return false
-        if (actor.bag.freeSlots() <= 0) return false
-        return nearest(actor) != null
+        val around = GroundItemManager.getItems()
+            .filter { !it.isRemoved && it.location.getDistance(actor.location) <= MonkeyConfig.LOOT_RANGE }
+            .filter { actor.canTake(it) }
+        if (around.isEmpty()) return false
+        if (nearest(actor) != null) return true
+        if (fullWait == 0) {
+            sendMessage(actor.owner, "Gigos wants to loot but his pack is full.")
+            fullWait = 25
+        }
+        return false
     }
 
     override fun start(actor: AmiliousMonkey) {

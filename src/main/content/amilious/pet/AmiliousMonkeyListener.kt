@@ -32,16 +32,15 @@ class AmiliousMonkeyListener : InteractionListener {
             true
         }
 
-        on(ids, IntType.NPC, "loot", "autoloot-on", "autoloot-off") { player, node ->
+        on(ids, IntType.NPC, "pet") { player, node ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
             if (live == null || live !== node) {
                 sendMessage(player, "That is not your monkey.")
                 return@on true
             }
-            val on = player.getAttribute(MonkeyConfig.ATTR_LOOT, true)
-            setAttribute(player, MonkeyConfig.ATTR_LOOT, !on)
-            live.refreshMenu()
-            sendMessage(player, if (!on) "Gigos will loot your kills." else "Gigos will not loot.")
+            player.face(live)
+            player.animate(core.game.world.update.flag.context.Animation(827))
+            sendMessage(player, "You scratch Gigos behind the ear.")
             true
         }
 

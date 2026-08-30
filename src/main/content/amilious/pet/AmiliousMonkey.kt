@@ -80,7 +80,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         isWalks = true
         interaction.set(Option("Pack", 0))
         interaction.set(Option("Talk-to", 1))
-        interaction.set(Option("Loot", 2))
+        interaction.set(Option("Pet", 2))
         interaction.set(Option("Dismiss", 3))
         loadBag()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
@@ -95,7 +95,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
             owner, this, "Gigos",
             0 to "Pack",
             1 to "Talk-to",
-            2 to if (lootOn) "Autoloot-on" else "Autoloot-off",
+            2 to "Pet",
             3 to "Dismiss"
         )
         GigosHudPacket.send(owner, this)

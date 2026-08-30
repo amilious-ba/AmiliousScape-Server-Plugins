@@ -186,20 +186,22 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         }
     }
 
-    fun ownerIsRunning(): Boolean {
-        val q = owner.walkingQueue
-        if (q.runDir != -1) return true
-        return try {
-            owner.settings.isRunToggled
+    fun updateGait() {
+        try {
+            val gap = location.getDistance(owner.location)
+            val shouldRun = ownerIsRunning() || gap > MonkeyConfig.RUN_GAP
+            walkingQueue.isRunning = shouldRun
         } catch (_: Exception) {
-            false
+            // ignore — do not let this logout the player
         }
     }
 
-    fun updateGait() {
-        val gap = location.getDistance(owner.location)
-        val shouldRun = ownerIsRunning() || gap > MonkeyConfig.RUN_GAP
-        walkingQueue.isRunning = shouldRun
+    fun ownerIsRunning(): Boolean {
+        return try {
+            owner.walkingQueue.runDir != -1 || owner.settings.isRunToggled
+        } catch (_: Exception) {
+            false
+        }
     }
 
     fun saveBag() {

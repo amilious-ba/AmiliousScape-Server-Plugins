@@ -92,12 +92,21 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     fun takeNonBananasToOwner(): Int {
         var moved = 0
         for (item in bag.toArray()) {
-            if (item == null) continue
-            if (isBananaItem(item)) continue
-            val copy = Item(item.id, item.amount)
-            if (!owner.inventory.hasSpaceFor(copy)) break
-            if (bag.remove(copy) && owner.inventory.add(copy)) {
-                moved += copy.amount
+            if (item == null || isBananaItem(item)) continue
+            var left = item.amount
+            while (left > 0) {
+                val n = left
+                val copy = Item(item.id, n)
+                if (owner.inventory.hasSpaceFor(copy)) {
+                    if (bag.remove(copy) && owner.inventory.add(copy)) {
+                        moved += n
+                        left = 0
+                    } else break
+                } else if (n == 1) {
+                    break
+                } else {
+                    left = n / 2
+                }
             }
         }
         if (moved > 0) saveBag()

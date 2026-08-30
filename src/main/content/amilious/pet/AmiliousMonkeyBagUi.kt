@@ -16,7 +16,7 @@ class AmiliousMonkeyBagUi : InterfaceListener {
     override fun defineInterfaceListeners() {
         on(665, 0) { player, _, opcode, _, slot, _ ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-                ?: return@on true
+                ?: return@on false
             val invItem = player.inventory.get(slot) ?: return@on true
             val want = amountFor(opcode)
             if (want < 0) {
@@ -34,7 +34,7 @@ class AmiliousMonkeyBagUi : InterfaceListener {
 
         on(671, 27) { player, _, opcode, _, slot, _ ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-                ?: return@on true
+                ?: return@on false
             val bagItem = live.bag.get(slot) ?: return@on true
             val want = amountFor(opcode)
             if (want < 0) {
@@ -50,15 +50,15 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             true
         }
 
-        on(662, 7) { player, _, _, _, _, _ -> takeBob(player) }
-        on(662, 11) { player, _, _, _, _, _ -> takeBob(player) }
-        on(747, 7) { player, _, _, _, _, _ -> takeBob(player) }
-        on(747, 18) { player, _, _, _, _, _ -> takeBob(player) }
+        on(671) { player, _, _, button, _, _ ->
+            if (button != 143974685) return@on false
+            takeBob(player)
+        }
     }
 
     private fun takeBob(player: Player): Boolean {
         val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-            ?: return true
+            ?: return false
         val n = live.takeNonBananasToOwner()
         if (n == 0) sendMessage(player, "Gigos has nothing to give (bananas stay).")
         else sendMessage(player, "You take items from Gigos' pack.")

@@ -17,7 +17,11 @@ class AmiliousMonkeyTicker : TickListener {
             }
         }
         for (player in Repository.players) {
-            val monkey = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null) ?: continue
+            val monkey = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+            if (monkey == null) {
+                GigosHudPacket.hide(player)
+                continue
+            }
             monkey.tickCompanion()
         }
     }

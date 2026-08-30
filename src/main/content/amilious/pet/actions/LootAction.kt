@@ -27,21 +27,25 @@ class LootAction : CompanionAction<AmiliousMonkey> {
     }
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
-        if (!actor.lootEnabled() || lootBusy) return false
-        if (actor.hunger() < MonkeyConfig.HUNGER_LOOT) return false
+        if (!actor.lootEnabled()) return false
         val around = GroundItemManager.getItems()
             .filter { !it.isRemoved && it.location.getDistance(actor.location) <= MonkeyConfig.LOOT_RANGE }
             .filter { actor.canTake(it) }
         if (around.isEmpty()) return false
-        if (nearest(actor) != null) return true
-        if (fullWait == 0) {
-            sendMessage(actor.owner, "Gigos wants to loot but his pack is full.")
-            fullWait = 25
+        if (nearest(actor) == null) {
+            if (fullWait == 0) {
+                sendMessage(actor.owner, "Gigos wants to loot but his pack is full.")
+                fullWait = 25
+            }
+            return false
         }
-        return false
+        if (lootBusy) return false
+        if (actor.hunger() < MonkeyConfig.HUNGER_LOOT) return false
+        return true
     }
 
     override fun start(actor: AmiliousMonkey) {
+        lootBusy = false
         tile = nearest(actor)?.location
         phase = Phase.WALK
         wait = 0
@@ -51,6 +55,9 @@ class LootAction : CompanionAction<AmiliousMonkey> {
         val dest = tile ?: return false
         when (phase) {
             Phase.WALK -> {
+                if (lootBusy && !actor.pulseManager.hasPulseRunning()) {
+                    lootBusy = false
+                }
                 if (actor.location.getDistance(dest) <= 1.0) {
                     phase = Phase.WAIT
                     wait = 2
@@ -76,6 +83,7 @@ class LootAction : CompanionAction<AmiliousMonkey> {
             }
             Phase.SCOOP -> {
                 scoop(actor, dest)
+                lootBusy = false
                 return false
             }
         }
@@ -108,7 +116,6 @@ class LootAction : CompanionAction<AmiliousMonkey> {
                 }
                 continue
             }
-            if (m.bag.freeSlots() <= 0) break
             if (!m.bag.hasSpaceFor(copy)) continue
             if (m.bag.add(copy)) {
                 GroundItemManager.destroy(gi)

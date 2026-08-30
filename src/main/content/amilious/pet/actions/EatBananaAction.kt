@@ -20,11 +20,11 @@ class EatBananaAction : CompanionAction<AmiliousMonkey> {
         if (!actor.eatEnabled()) return false
         if (eatWait > 0) return false
         if (actor.hunger() >= 30) return false
-        return actor.bag.toArray().any { it != null && it.id == MonkeyConfig.BANANA_ID }
+        return actor.hasBanana()
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
-        if (!actor.bag.remove(Item(MonkeyConfig.BANANA_ID, 1))) return false
+        if (!actor.takeOneBanana()) return false
         actor.addHunger(MonkeyConfig.HUNGER_BANANA)
         actor.saveBag()
         GigosHudPacket.send(actor.owner, actor)
@@ -32,4 +32,5 @@ class EatBananaAction : CompanionAction<AmiliousMonkey> {
         eatWait = 5
         return false
     }
+
 }

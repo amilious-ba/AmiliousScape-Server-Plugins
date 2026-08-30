@@ -9,6 +9,7 @@ object MonkeyConfig {
     const val LOOT_RANGE = 6
     const val DUNG_COOLDOWN = 8
     const val BANANA_ID = 1963
+    const val BANANA_NOTE_ID = 1964
 
     const val HUNGER_MAX = 100
     const val HUNGER_BANANA = 25

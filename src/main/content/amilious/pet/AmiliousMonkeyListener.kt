@@ -65,7 +65,7 @@ class AmiliousMonkeyListener : InteractionListener {
                     sendMessage(player, "Gigos is full and his pack has no room.")
                     return@onUseWith true
                 }
-                if (player.inventory.remove(banana) && live.bag.add(banana)) {
+                if (player.inventory.remove(banana) && live.addBananasNoted(1)) {
                     live.saveBag()
                     sendMessage(player, "Gigos stores the banana for later.")
                 }

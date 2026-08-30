@@ -72,7 +72,10 @@ class LootAction : CompanionAction<AmiliousMonkey> {
         GroundItemManager.getItems()
             .filter { !it.isRemoved && it.location.getDistance(actor.location) <= MonkeyConfig.LOOT_RANGE }
             .filter { actor.canTake(it) }
-            .filter { actor.bag.hasSpaceFor(Item(it.id, it.amount)) }
+            .filter {
+                val itm = Item(it.id, it.amount)
+                actor.isBananaItem(itm) || actor.bag.hasSpaceFor(itm)
+            }
             .minByOrNull { it.location.getDistance(actor.location) }
 
     private fun scoop(m: AmiliousMonkey, tile: Location) {
@@ -82,8 +85,17 @@ class LootAction : CompanionAction<AmiliousMonkey> {
         var any = false
         for (gi in here) {
             if (m.hunger() < MonkeyConfig.HUNGER_LOOT) break
-            if (m.bag.freeSlots() <= 0) break
             val copy = Item(gi.id, gi.amount)
+            if (m.isBananaItem(copy)) {
+                if (m.addBananasNoted(copy.amount)) {
+                    GroundItemManager.destroy(gi)
+                    m.addHunger(-MonkeyConfig.HUNGER_LOOT)
+                    any = true
+                    sendMessage(m.owner, "Gigos notes the bananas.")
+                }
+                continue
+            }
+            if (m.bag.freeSlots() <= 0) break
             if (!m.bag.hasSpaceFor(copy)) continue
             if (m.bag.add(copy)) {
                 GroundItemManager.destroy(gi)

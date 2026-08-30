@@ -199,4 +199,28 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         val n = item.name.lowercase()
         return n == "bones" || n.endsWith(" bones") || n == "bone"
     }
+
+    fun bananaNoteId(): Int {
+        val nid = Item(MonkeyConfig.BANANA_ID).definition?.noteId ?: -1
+        return if (nid > 0) nid else MonkeyConfig.BANANA_NOTE_ID
+    }
+
+    fun isBananaItem(item: Item): Boolean =
+        item.id == MonkeyConfig.BANANA_ID || item.id == bananaNoteId()
+
+    fun addBananasNoted(amount: Int): Boolean {
+        if (amount <= 0) return false
+        val note = Item(bananaNoteId(), amount)
+        if (bag.hasSpaceFor(note) && bag.add(note)) return true
+        val raw = Item(MonkeyConfig.BANANA_ID, amount)
+        return bag.hasSpaceFor(raw) && bag.add(raw)
+    }
+
+    fun takeOneBanana(): Boolean {
+        if (bag.remove(Item(MonkeyConfig.BANANA_ID, 1))) return true
+        return bag.remove(Item(bananaNoteId(), 1))
+    }
+
+    fun hasBanana(): Boolean = bag.toArray().any { it != null && isBananaItem(it) }
+
 }

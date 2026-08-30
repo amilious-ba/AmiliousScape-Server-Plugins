@@ -37,7 +37,7 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             false
         }
 
-        on(671, 27) { player, _, opcode, _, slot, _ ->
+        /*on(671, 27) { player, _, opcode, _, slot, _ ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
                 ?: return@on false
             val bagItem = live.bag.get(slot) ?: return@on true
@@ -53,7 +53,7 @@ class AmiliousMonkeyBagUi : InterfaceListener {
                 live.openBagUi()
             }
             true
-        }
+        }*/
 
         on(671) { player, _, _, button, _, _ ->
             if (button != 143974685) return@on false

@@ -12,12 +12,12 @@ import core.game.world.map.Location
 
 class LootAction : CompanionAction<AmiliousMonkey> {
 
-    private enum class Phase { WALK, WAIT, SCOOP, HOLD }
+    private enum class Phase { WALK, SCOOP, HOLD }
 
     private var phase = Phase.WALK
     private var tile: Location? = null
     private var wait = 0
-    private var lootBusy = false
+    private var walkTicks = 0
     private var fullWait = 0
 
     override fun name() = "loot"
@@ -28,72 +28,41 @@ class LootAction : CompanionAction<AmiliousMonkey> {
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (!actor.lootEnabled()) return false
-        val around = GroundItemManager.getItems()
-            .filter { !it.isRemoved && it.location.getDistance(actor.location) <= MonkeyConfig.LOOT_RANGE }
-            .filter { actor.canTake(it) }
-        if (around.isEmpty()) return false
-        if (nearest(actor) == null) {
-            if (fullWait == 0) {
-                sendMessage(actor.owner, "Gigos wants to loot but his pack is full.")
-                fullWait = 25
-            }
-            return false
-        }
-        if (lootBusy) return false
         if (actor.hunger() < MonkeyConfig.HUNGER_LOOT) return false
-        return true
+        val item = nearest(actor)
+        if (item != null) return true
+        if (hasNearby(actor) && fullWait == 0) {
+            sendMessage(actor.owner, "Gigos wants to loot but his pack is full.")
+            fullWait = 25
+        }
+        return false
     }
 
     override fun start(actor: AmiliousMonkey) {
-        lootBusy = false
         tile = nearest(actor)?.location
         phase = Phase.WALK
         wait = 0
+        walkTicks = 0
+        walkTo(actor)
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
         val dest = tile ?: return false
         when (phase) {
             Phase.WALK -> {
-                if (lootBusy && !actor.pulseManager.hasPulseRunning()) {
-                    lootBusy = false
-                }
-                if (actor.location.getDistance(dest) <= 0.75) {
-                    phase = Phase.WAIT
-                    wait = 3
-                    lootBusy = false
+                walkTicks++
+                if (actor.location.getDistance(dest) <= 1.5) {
+                    phase = Phase.SCOOP
                     return true
                 }
-                if (!lootBusy) {
-                    lootBusy = true
-                    actor.pulseManager.run(object : MovementPulse(actor, dest) {
-                        override fun pulse(): Boolean {
-                            lootBusy = false
-                            return true
-                        }
-                    })
-                }
-                return true
-            }
-            Phase.WAIT -> {
-                wait--
-                if (wait > 0) return true
-                if (actor.location.getDistance(dest) > 0.75) {
-                    phase = Phase.WALK
-                    return true
-                }
-                phase = Phase.SCOOP
+                if (walkTicks > 25) return false
+                if (!actor.pulseManager.hasPulseRunning()) walkTo(actor)
                 return true
             }
             Phase.SCOOP -> {
-                if (actor.location.getDistance(dest) > 0.75) {
-                    phase = Phase.WALK
-                    return true
-                }
                 scoop(actor, dest)
                 phase = Phase.HOLD
-                wait = 4
-                lootBusy = false
+                wait = 3
                 return true
             }
             Phase.HOLD -> {
@@ -102,6 +71,21 @@ class LootAction : CompanionAction<AmiliousMonkey> {
             }
         }
     }
+
+    private fun walkTo(actor: AmiliousMonkey) {
+        val dest = tile ?: return
+        actor.pulseManager.clear()
+        actor.pulseManager.run(object : MovementPulse(actor, dest) {
+            override fun pulse(): Boolean = true
+        })
+    }
+
+    private fun hasNearby(actor: AmiliousMonkey): Boolean =
+        GroundItemManager.getItems().any {
+            !it.isRemoved &&
+                    it.location.getDistance(actor.location) <= MonkeyConfig.LOOT_RANGE &&
+                    actor.canTake(it)
+        }
 
     private fun nearest(actor: AmiliousMonkey): GroundItem? =
         GroundItemManager.getItems()
@@ -113,9 +97,9 @@ class LootAction : CompanionAction<AmiliousMonkey> {
             }
             .minByOrNull { it.location.getDistance(actor.location) }
 
-    private fun scoop(m: AmiliousMonkey, tile: Location) {
+    private fun scoop(m: AmiliousMonkey, dest: Location) {
         val here = GroundItemManager.getItems()
-            .filter { !it.isRemoved && it.location == tile }
+            .filter { !it.isRemoved && it.location.getDistance(dest) <= 1.0 }
             .filter { m.canTake(it) }
         var any = false
         for (gi in here) {

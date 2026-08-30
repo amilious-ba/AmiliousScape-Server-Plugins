@@ -24,6 +24,8 @@ object GigosHudPacket {
         buf.p2(monkey.hunger().coerceIn(0, 65535))
         buf.p2(MonkeyConfig.HUNGER_MAX)
         buf.putString("Gigos")
+        buf.p2(monkey.bananaCount().coerceIn(0, 65535))
+        buf.putString(monkey.brainActionName())
         buf.p1(4)
         buf.p1(2)
         buf.p1(if (lootOn) 1 else 0)

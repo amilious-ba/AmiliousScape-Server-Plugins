@@ -223,4 +223,14 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
 
     fun hasBanana(): Boolean = bag.toArray().any { it != null && isBananaItem(it) }
 
+    fun bananaCount(): Int {
+        var n = 0
+        for (it in bag.toArray()) {
+            if (it != null && isBananaItem(it)) n += it.amount
+        }
+        return n
+    }
+
+    fun brainActionName(): String = brain.currentName()
+
 }

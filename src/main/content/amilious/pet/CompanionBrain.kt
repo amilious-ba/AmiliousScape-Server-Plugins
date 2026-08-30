@@ -3,6 +3,9 @@ package content.amilious.pet
 import content.amilious.pet.actions.CompanionAction
 
 class CompanionBrain<T>(private val actor: T) {
+
+    fun currentName(): String = current?.name() ?: "idle"
+
     private val actions = ArrayList<CompanionAction<T>>()
     private var current: CompanionAction<T>? = null
 

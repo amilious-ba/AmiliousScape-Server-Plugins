@@ -177,12 +177,29 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         }
         noteOwnerIdle()
         tickCombatIdle()
+        updateGait()
         brain.tick()
         val name = brain.currentName()
         if (name != lastHudAction) {
             lastHudAction = name
             GigosHudPacket.send(owner, this)
         }
+    }
+
+    fun ownerIsRunning(): Boolean {
+        val q = owner.walkingQueue
+        if (q.runDir != -1) return true
+        return try {
+            owner.settings.isRunToggled
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    fun updateGait() {
+        val gap = location.getDistance(owner.location)
+        val shouldRun = ownerIsRunning() || gap > MonkeyConfig.RUN_GAP
+        walkingQueue.isRunning = shouldRun
     }
 
     fun saveBag() {
@@ -226,6 +243,8 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     }
 
     fun followOwner() {
+        updateGait()
+        if (pulseManager.hasPulseRunning()) return
         pulseManager.run(object : MovementPulse(this, owner) {
             override fun pulse(): Boolean = false
         })

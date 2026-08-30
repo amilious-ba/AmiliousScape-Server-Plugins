@@ -13,6 +13,7 @@ object MonkeyConfig {
     const val ANIM_ATTACK = 220
     const val ANIM_BLOCK = 221
     const val ANIM_DEATH = 223
+    const val RUN_GAP = 2.5
 
     const val HUNGER_MAX = 100
     const val HUNGER_BANANA = 25

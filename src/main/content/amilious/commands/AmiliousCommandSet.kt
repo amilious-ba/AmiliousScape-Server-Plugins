@@ -1,5 +1,6 @@
 package content.amilious.commands
 
+import core.api.playAudio
 import core.game.node.entity.player.info.Rights
 import core.game.system.command.Privilege
 import core.game.system.command.sets.CommandSet
@@ -93,6 +94,10 @@ class AmiliousCommandSet : CommandSet(Privilege.ADMIN) {
             if (target != player) {
                 notify(target, "Your XP rate is now ${rate}x.")
             }
+        }
+
+        define("gsfx", Privilege.ADMIN, "::gsfx id", "Play a sound") { player, args ->
+            playAudio(player, args[1].toInt())
         }
 
     }

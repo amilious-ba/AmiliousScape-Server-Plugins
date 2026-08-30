@@ -31,8 +31,7 @@ class WanderAction : CompanionAction<AmiliousMonkey> {
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (wait > 0) return false
-        if (idleTicks < 15) return false
-        if (actor.owner.properties.combatPulse.isAttacking) return false
+        if (actor.ownerIdleTicks < 25) return false
         if (actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) return false
         return true
     }
@@ -49,6 +48,7 @@ class WanderAction : CompanionAction<AmiliousMonkey> {
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
+        if (actor.ownerIdleTicks < 2) return false
         val tile = dest ?: return false
         return when (phase) {
             0 -> {

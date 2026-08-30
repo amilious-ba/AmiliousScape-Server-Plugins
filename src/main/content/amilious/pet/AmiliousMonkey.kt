@@ -25,9 +25,11 @@ import core.game.world.repository.Repository
 class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
 
     val bag = Container(MonkeyConfig.BOB_SIZE)
-    //var dungWait = 0
-    //var lootBusy = false
-    //var eatWait = 0
+    var ownerIdleTicks = 0
+        private set
+    private var lastOwnerX = Int.MIN_VALUE
+    private var lastOwnerY = Int.MIN_VALUE
+    private var lastOwnerHp = -1
 
     private val brain = CompanionBrain(this)
 
@@ -108,6 +110,20 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         sendMessage(owner, "Gigos scurries off. His pack is safe. ::monkey to call him back.")
     }
 
+    fun noteOwnerIdle() {
+        val loc = owner.location
+        val hp = owner.skills.lifepoints
+        val busy = owner.properties.combatPulse.isAttacking
+        if (busy || loc.x != lastOwnerX || loc.y != lastOwnerY || hp != lastOwnerHp) {
+            ownerIdleTicks = 0
+            lastOwnerX = loc.x
+            lastOwnerY = loc.y
+            lastOwnerHp = hp
+            return
+        }
+        ownerIdleTicks++
+    }
+
     fun tickCompanion() {
         val gone = !owner.isActive
                 || owner.session == null
@@ -116,6 +132,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
             dismiss()
             return
         }
+        noteOwnerIdle()
         brain.tick()
     }
 

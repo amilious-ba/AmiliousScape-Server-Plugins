@@ -1,12 +1,15 @@
 package content.amilious.pet
 
+import content.amilious.food.FoodKind
+import content.amilious.food.FoodTable
 import core.api.sendMessage
-import core.api.setAttribute
 import core.game.interaction.IntType
 import core.game.interaction.InteractionListener
 import core.game.node.Node
 import core.game.node.entity.player.Player
 import core.game.node.item.Item
+import core.game.world.update.flag.context.Animation
+import core.game.world.update.flag.context.Graphics
 import core.plugin.Initializable
 
 @Initializable
@@ -37,8 +40,23 @@ class AmiliousMonkeyListener : InteractionListener {
                 return@on true
             }
             player.face(live)
-            player.animate(core.game.world.update.flag.context.Animation(827))
+            player.animate(Animation(827))
             sendMessage(player, "You scratch Gigos behind the ear.")
+            true
+        }
+
+        on(ids, IntType.NPC, "empty") { player, node ->
+            val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+            if (live == null || live !== node) {
+                sendMessage(player, "That is not your monkey.")
+                return@on true
+            }
+            val n = live.takeNonBananasToOwner()
+            sendMessage(
+                player,
+                if (n == 0) "Gigos has nothing to empty (bananas stay)."
+                else "You empty Gigos' pack. Bananas stay with him."
+            )
             true
         }
 
@@ -66,6 +84,17 @@ class AmiliousMonkeyListener : InteractionListener {
             }
             if (live.isBananaItem(Item(used.id, 1))) {
                 return@onUseWith false
+            }
+            val entry = FoodTable.get(used.id)
+            if (entry != null && FoodKind.ALCOHOL in entry.kinds) {
+                val one = Item(used.id, 1)
+                if (!player.inventory.remove(one)) return@onUseWith true
+                if (entry.leftover > 0) player.inventory.add(Item(entry.leftover, 1))
+                live.addDrunk(MonkeyConfig.DRUNK_BEER + entry.healMin * 2)
+                live.graphics(Graphics(277, 80))
+                sendMessage(player, "Gigos drinks ${a(entry.name)} and is getting crazy!")
+                GigosHudPacket.send(player, live)
+                return@onUseWith true
             }
             val item = Item(used.id, 1)
             if (!live.bag.hasSpaceFor(item)) {
@@ -101,5 +130,11 @@ class AmiliousMonkeyListener : InteractionListener {
             sendMessage(player, "Gigos grabs the banana. Ook!")
         }
         return true
+    }
+
+    private fun a(name: String): String {
+        val n = name.trim().lowercase()
+        val an = n.firstOrNull() in setOf('a', 'e', 'i', 'o', 'u')
+        return if (an) "an $n" else "a $n"
     }
 }

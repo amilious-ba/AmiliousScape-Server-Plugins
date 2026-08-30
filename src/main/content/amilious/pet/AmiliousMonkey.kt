@@ -99,7 +99,8 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         interaction.set(Option("Pack", 0))
         interaction.set(Option("Talk-to", 1))
         interaction.set(Option("Pet", 2))
-        interaction.set(Option("Dismiss", 3))
+        interaction.set(Option("Empty", 3))
+        interaction.set(Option("Dismiss", 4))
         loadBag()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
         refreshMenu()
@@ -138,9 +139,26 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
             0 to "Pack",
             1 to "Talk-to",
             2 to "Pet",
-            3 to "Dismiss"
+            3 to "Empty",
+            4 to "Dismiss"
         )
         GigosHudPacket.send(owner, this)
+    }
+
+    fun drunkTicks(): Int = owner.getAttribute(MonkeyConfig.ATTR_DRUNK, 0)
+    fun isDrunk(): Boolean = drunkTicks() > 0
+
+    fun addDrunk(ticks: Int) {
+        owner.setAttribute(MonkeyConfig.ATTR_DRUNK, (drunkTicks() + ticks).coerceAtMost(200))
+    }
+
+    fun tickDrunk() {
+        val n = drunkTicks()
+        if (n <= 0) return
+        owner.setAttribute(MonkeyConfig.ATTR_DRUNK, n - 1)
+        if (n % 4 == 0) {
+            graphics(core.game.world.update.flag.context.Graphics(277, 80))
+        }
     }
 
     fun dismiss() {

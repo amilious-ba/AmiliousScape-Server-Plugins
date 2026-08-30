@@ -23,6 +23,8 @@ object MonkeyConfig {
     const val HUNGER_PICK = 2
     const val HUNGER_FEED = 4
 
+    const val ATTR_DRUNK = "amilious_gigos_drunk" // ticks remaining, not saved
+    const val DRUNK_BEER = 50
     const val ATTR_OWNED = "/save:amilious_monkey_owned"
     const val ATTR_ACTIVE = "amilious_monkey"
     const val ATTR_BAG = "/save:amilious_monkey_bag"

@@ -14,40 +14,55 @@ import kotlin.math.min
 class AmiliousMonkeyBagUi : InterfaceListener {
 
     override fun defineInterfaceListeners() {
+
         on(665, 0) { player, _, opcode, _, slot, _ ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-                ?: return@on false
-            if (slot < 0) return@on true
+                ?: return@on true
             val invItem = player.inventory.get(slot) ?: return@on true
+            if (invItem.id == MonkeyConfig.BANANA_ID) return@on true
             val want = amountFor(opcode)
             if (want < 0) {
-                askAmount(player, live, player.inventory, live.bag, invItem.id)
+                sendMessage(player, "Store-X not wired yet. Use Store-1/5/10/All.")
                 return@on true
             }
-            val moved = transfer(player, live, player.inventory, live.bag, invItem.id, want)
-            if (moved == 0) sendMessage(player, "Gigos cannot carry any more.")
-            else {
+            val room = live.bag.getMaximumAdd(invItem)
+            if (room <= 0) {
+                sendMessage(player, "Gigos cannot carry any more.")
+                return@on true
+            }
+            val move = Item(invItem.id, min(want, min(invItem.amount, room)))
+            if (player.inventory.remove(move) && live.bag.add(move)) {
                 live.saveBag()
                 live.openBagUi()
+                if (move.amount < invItem.amount && want == Int.MAX_VALUE) {
+                    sendMessage(player, "Gigos took what he could carry.")
+                }
             }
             true
         }
 
         on(671, 27) { player, _, opcode, _, slot, _ ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-                ?: return@on false
+                ?: return@on true
             if (slot < 0) return@on true
             val bagItem = live.bag.get(slot) ?: return@on true
             val want = amountFor(opcode)
             if (want < 0) {
-                askAmount(player, live, live.bag, player.inventory, bagItem.id)
+                sendMessage(player, "Withdraw-X not wired yet. Use Withdraw-1/5/10/All.")
                 return@on true
             }
-            val moved = transfer(player, live, live.bag, player.inventory, bagItem.id, want)
-            if (moved == 0) sendMessage(player, "You have no inventory space.")
-            else {
+            val room = player.inventory.getMaximumAdd(bagItem)
+            if (room <= 0) {
+                sendMessage(player, "You have no inventory space.")
+                return@on true
+            }
+            val move = Item(bagItem.id, min(want, min(bagItem.amount, room)))
+            if (live.bag.remove(move) && player.inventory.add(move)) {
                 live.saveBag()
                 live.openBagUi()
+                if (move.amount < bagItem.amount && want == Int.MAX_VALUE) {
+                    sendMessage(player, "Inventory full. Left the rest with Gigos.")
+                }
             }
             true
         }

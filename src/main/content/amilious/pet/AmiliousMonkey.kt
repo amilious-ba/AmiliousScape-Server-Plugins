@@ -13,7 +13,6 @@ import content.amilious.pet.actions.UnburdenAction
 import content.amilious.pet.actions.WanderAction
 import core.api.playAudio
 import core.api.sendMessage
-import core.game.component.CloseEvent
 import core.game.component.Component
 import core.game.container.Container
 import core.game.container.access.InterfaceContainer
@@ -140,7 +139,6 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     }
 
     fun refreshMenu() {
-        val lootOn = owner.getAttribute(MonkeyConfig.ATTR_LOOT, true)
         NpcMenuPacket.send(
             owner, this, "Gigos",
             0 to "Pack",
@@ -221,6 +219,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
             dismiss()
             return
         }
+        tickDrunk()
         noteOwnerIdle()
         tickCombatIdle()
         brain.tick()
@@ -252,11 +251,11 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     }
 
     fun openBagUi() {
-        owner.interfaceManager.open(Component(671)).setCloseEvent(CloseEvent { player, _ ->
+        owner.interfaceManager.open(Component(671)).setCloseEvent { player, _ ->
             saveBag()
             player.interfaceManager.closeSingleTab()
             true
-        })
+        }
         bag.shift()
         owner.interfaceManager.openSingleTab(Component(665))
         InterfaceContainer.generateItems(

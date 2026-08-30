@@ -63,28 +63,34 @@ class UnburdenAction : CompanionAction<AmiliousMonkey> {
         for (it in actor.owner.inventory.toArray()) {
             if (it == null) continue
             if (actor.isBananaItem(it)) continue
-            if (!looksGathered(it.name)) continue
+            if (it.id !in GATHER_IDS) continue
             if (actor.bag.getMaximumAdd(it) <= 0) continue
             return it
         }
         return null
     }
 
-    private fun looksGathered(name: String): Boolean {
-        val n = name.lowercase()
-        return n.contains("ore") ||
-                n.contains("log") ||
-                n.contains("wool") ||
-                n.contains("fish") ||
-                n.endsWith(" shrimp") ||
-                n.contains("anchov") ||
-                n.contains("gem") ||
-                n.contains("bar") ||
-                n.contains("essence") ||
-                n.contains("flax") ||
-                n.contains("herb") ||
-                n.contains("grapes") ||
-                n.contains("potato") ||
-                n.contains("wheat")
+    companion object {
+        private val GATHER_IDS = setOf(
+            // ores / rock
+            434, 436, 438, 440, 442, 444, 447, 449, 451, 453,
+            697, 698, 699, 700,          // sandstone
+            6979, 6981, 6983,            // granite
+            // logs
+            1511, 1521, 1519, 1517, 1515, 1513,
+            6332, 6333, 2862, 3239,
+            // raw fish
+            317, 321, 327, 345, 353, 335, 341, 349, 331,
+            359, 377, 363, 371, 383, 7944, 3142, 3379, 5001,
+            // wool / flax / essence
+            1737, 1779, 1436, 7936,
+            // uncut gems
+            1617, 1619, 1621, 1623, 1625, 1627, 1629, 1631,
+            // grimy herbs
+            199, 201, 203, 205, 207, 209, 211, 213, 215, 217, 219,
+            2485, 3049, 3051,
+            // farm
+            1947, 1942, 1987
+        )
     }
 }

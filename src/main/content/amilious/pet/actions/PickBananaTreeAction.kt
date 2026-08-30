@@ -17,6 +17,8 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
     private var wait = 0
     private var walkTicks = 0
     private var cool = 0
+    private var lastOwner = Location.create(0, 0, 0)
+    private var idleTicks = 0
     private var picksOnThis = 0
     private val rest = HashMap<String, Int>()
 
@@ -24,6 +26,9 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
 
     override fun cooldown(actor: AmiliousMonkey) {
         if (cool > 0) cool--
+        val here = actor.owner.location
+        if (here == lastOwner) idleTicks++ else idleTicks = 0
+        lastOwner = here
         val it = rest.iterator()
         while (it.hasNext()) {
             val e = it.next()
@@ -34,6 +39,7 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (cool > 0) return false
+        if (idleTicks < IDLE_NEED) return false
         if (actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) return false
         return nearestTile(actor) != null
     }
@@ -48,7 +54,11 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
-        val tile = dest ?: return done(actor)
+        if (idleTicks < 2) {
+            cool = 4
+            return false
+        }
+        val tile = dest ?: return false
         when (phase) {
             Phase.WALK -> {
                 walkTicks++
@@ -56,7 +66,7 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
                     phase = Phase.PICK
                     return true
                 }
-                if (walkTicks > 25) return done(actor)
+                if (walkTicks > 25) return false
                 if (!actor.pulseManager.hasPulseRunning()) walkTo(actor)
                 return true
             }
@@ -70,17 +80,16 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
                 if (!actor.addBananasNoted(1)) {
                     sendMessage(actor.owner, "Gigos wants a banana but his pack is full.")
                     cool = 25
-                    return done(actor)
+                    return false
                 }
                 actor.saveBag()
                 GigosHudPacket.send(actor.owner, actor)
                 sendMessage(actor.owner, "Gigos picks a banana.")
-                // actor.animate(...)  // add later
                 picksOnThis++
                 if (picksOnThis >= PICKS_PER_TREE) {
                     rest[key(tile)] = TREE_REST
                     cool = 6
-                    return done(actor)
+                    return false
                 }
                 phase = Phase.HOLD
                 wait = 3
@@ -93,11 +102,6 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
                 return true
             }
         }
-    }
-
-    private fun done(actor: AmiliousMonkey): Boolean {
-        actor.followOwner()
-        return false
     }
 
     private fun walkTo(actor: AmiliousMonkey) {
@@ -142,6 +146,7 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
         private const val RANGE = 10.0
         private const val PICKS_PER_TREE = 3
         private const val TREE_REST = 40
+        private const val IDLE_NEED = 8
         private val PICKABLE = intArrayOf(2073, 2074, 2075, 2076, 2077)
     }
 }

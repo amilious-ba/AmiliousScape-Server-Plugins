@@ -11,6 +11,7 @@ import content.amilious.pet.actions.PickBananaTreeAction
 import content.amilious.pet.actions.ThrowDungAction
 import content.amilious.pet.actions.UnburdenAction
 import content.amilious.pet.actions.WanderAction
+import core.api.playAudio
 import core.api.sendMessage
 import core.game.component.CloseEvent
 import core.game.component.Component
@@ -107,6 +108,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
         refreshMenu()
         sendMessage(owner, "Gigos hops down beside you.")
+        playAudio(owner, MonkeyConfig.SFX_PLAYFUL)
         followOwner()
     }
 
@@ -130,7 +132,10 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
                 }
             }
         }
-        if (moved > 0) saveBag()
+        if (moved > 0){
+            playAudio(owner, MonkeyConfig.SFX_SMALL)
+            saveBag()
+        }
         return moved
     }
 
@@ -189,6 +194,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         NpcMenuPacket.clear(owner, this)
         owner.removeAttribute(MonkeyConfig.ATTR_ACTIVE)
         GigosHudPacket.hide(owner)
+        playAudio(owner, MonkeyConfig.SFX_PLAYFUL)
         clear()
         sendMessage(owner, "Gigos scurries off. His pack is safe. ::monkey to call him back.")
     }

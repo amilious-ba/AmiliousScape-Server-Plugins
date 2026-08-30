@@ -2,6 +2,7 @@ package content.amilious.pet
 
 import content.amilious.food.FoodKind
 import content.amilious.food.FoodTable
+import core.api.playAudio
 import core.api.sendMessage
 import core.game.interaction.IntType
 import core.game.interaction.InteractionListener
@@ -129,6 +130,7 @@ class AmiliousMonkeyListener : InteractionListener {
         if (entry.leftover > 0) player.inventory.add(Item(entry.leftover, 1))
         live.addDrunk(MonkeyConfig.DRUNK_BEER + entry.healMin * 2)
         live.graphics(Graphics(277, 80))
+        playAudio(player, MonkeyConfig.SFX_OOK)
         sendMessage(player, "Gigos drinks ${a(entry.name)} and is getting crazy!")
         GigosHudPacket.send(player, live)
         return true
@@ -145,6 +147,7 @@ class AmiliousMonkeyListener : InteractionListener {
             if (!player.inventory.remove(one)) return true
             if (live.addBananasNoted(1)) {
                 live.saveBag()
+                playAudio(player, MonkeyConfig.SFX_SMALL)
                 sendMessage(player, "Gigos stores the banana for later.")
             }
             return true
@@ -152,6 +155,7 @@ class AmiliousMonkeyListener : InteractionListener {
         if (player.inventory.remove(one)) {
             live.addHunger(MonkeyConfig.HUNGER_BANANA)
             GigosHudPacket.send(player, live)
+            playAudio(player, MonkeyConfig.SFX_OOK)
             sendMessage(player, "Gigos grabs the banana. Ook!")
         }
         return true

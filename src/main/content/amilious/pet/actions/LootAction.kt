@@ -3,6 +3,7 @@ package content.amilious.pet.actions
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
 import content.amilious.pet.MonkeyConfig
+import core.api.playAudio
 import core.api.sendMessage
 import core.game.interaction.MovementPulse
 import core.game.node.item.GroundItem
@@ -123,6 +124,7 @@ class LootAction : CompanionAction<AmiliousMonkey> {
             }
         }
         if (any) {
+            playAudio(m.owner, MonkeyConfig.SFX_SMALL)
             m.saveBag()
             GigosHudPacket.send(m.owner, m)
         }

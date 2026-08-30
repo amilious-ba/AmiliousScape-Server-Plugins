@@ -3,6 +3,7 @@ package content.amilious.pet.actions
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
 import content.amilious.pet.MonkeyConfig
+import core.api.playAudio
 import core.api.sendMessage
 import core.game.node.item.Item
 
@@ -51,6 +52,7 @@ class UnburdenAction : CompanionAction<AmiliousMonkey> {
             actor.addHunger(-MonkeyConfig.HUNGER_LOOT)
             actor.saveBag()
             GigosHudPacket.send(actor.owner, actor)
+            playAudio(actor.owner, MonkeyConfig.SFX_SMALL)
             sendMessage(actor.owner, "Gigos takes the ${move.name.lowercase()} from you.")
         }
         cool = 2

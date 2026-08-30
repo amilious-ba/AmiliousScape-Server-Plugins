@@ -3,6 +3,7 @@ package content.amilious.pet.actions
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
 import content.amilious.pet.MonkeyConfig
+import core.api.playAudio
 import core.api.sendMessage
 import core.game.interaction.MovementPulse
 import core.game.world.map.Location
@@ -89,6 +90,7 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
                     return false
                 }
                 actor.addHunger(-MonkeyConfig.HUNGER_PICK)
+                playAudio(actor.owner, MonkeyConfig.SFX_OOK)
                 actor.saveBag()
                 GigosHudPacket.send(actor.owner, actor)
                 sendMessage(actor.owner, "Gigos picks a banana.")

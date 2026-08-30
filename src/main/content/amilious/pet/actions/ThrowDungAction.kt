@@ -3,6 +3,7 @@ package content.amilious.pet.actions
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
 import content.amilious.pet.MonkeyConfig
+import core.api.playAudio
 import core.api.sendMessage
 import core.game.node.entity.combat.ImpactHandler
 import core.game.node.entity.impl.Projectile
@@ -58,6 +59,7 @@ class ThrowDungAction : CompanionAction<AmiliousMonkey> {
                         5,     // angle
                         11     // distance offset
                     ).send()
+                    playAudio(actor.owner, MonkeyConfig.SFX_OOK)
                 } catch (_: Exception) {
                 }
                 GigosHudPacket.send(actor.owner, actor)

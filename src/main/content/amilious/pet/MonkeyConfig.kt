@@ -38,4 +38,9 @@ object MonkeyConfig {
     const val ATTR_FEED = "/save:amilious_monkey_feed"
     const val ATTR_PICK = "/save:amilious_monkey_pick"
     const val ATTR_UNBURDEN = "/save:amilious_monkey_unburden"
+
+    const val SFX_PLAYFUL = 633   // summon / dismiss
+    const val SFX_OOK = 630       // throw, pick, eat, drunk
+    const val SFX_SMALL = 634     // loot, unburden, empty
+
 }

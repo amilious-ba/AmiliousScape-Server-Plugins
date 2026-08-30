@@ -3,6 +3,7 @@ package content.amilious.pet.actions
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
 import content.amilious.pet.MonkeyConfig
+import core.api.playAudio
 import core.api.sendMessage
 import core.game.node.item.Item
 
@@ -29,6 +30,7 @@ class EatBananaAction : CompanionAction<AmiliousMonkey> {
         actor.saveBag()
         GigosHudPacket.send(actor.owner, actor)
         sendMessage(actor.owner, "Gigos eats a banana.")
+        playAudio(actor.owner, MonkeyConfig.SFX_OOK)
         eatWait = 5
         return false
     }

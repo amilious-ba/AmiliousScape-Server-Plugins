@@ -17,6 +17,14 @@ class AmiliousMonkeyListener : InteractionListener {
 
     private val ids = intArrayOf(MonkeyConfig.NPC_ID)
 
+    private val alcoholIds = intArrayOf(
+        1917, // Beer
+        1905, // Asgarnian ale
+        2955, // Moonlight mead
+        1993, // Jug of wine
+        7919  // Bottle of wine
+    )
+
     override fun defineListeners() {
         on(ids, IntType.NPC, "pick-up", "pickup", "pack") { player, node ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
@@ -77,24 +85,20 @@ class AmiliousMonkeyListener : InteractionListener {
             useBanana(player, used.id, with)
         }
 
+        onUseWith(IntType.NPC, alcoholIds, *ids) { player, used, with ->
+            drinkAlcohol(player, used.id, with)
+        }
+
         onUseWith(IntType.NPC, Int.MAX_VALUE, *ids) { player, used, with ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-            if (live == null || with !== live) {
+            if (live == null || with.id != MonkeyConfig.NPC_ID) {
                 return@onUseWith false
             }
             if (live.isBananaItem(Item(used.id, 1))) {
                 return@onUseWith false
             }
-            val entry = FoodTable.get(used.id)
-            if (entry != null && FoodKind.ALCOHOL in entry.kinds) {
-                val one = Item(used.id, 1)
-                if (!player.inventory.remove(one)) return@onUseWith true
-                if (entry.leftover > 0) player.inventory.add(Item(entry.leftover, 1))
-                live.addDrunk(MonkeyConfig.DRUNK_BEER + entry.healMin * 2)
-                live.graphics(Graphics(277, 80))
-                sendMessage(player, "Gigos drinks ${a(entry.name)} and is getting crazy!")
-                GigosHudPacket.send(player, live)
-                return@onUseWith true
+            if (used.id in alcoholIds) {
+                return@onUseWith drinkAlcohol(player, used.id, with)
             }
             val item = Item(used.id, 1)
             if (!live.bag.hasSpaceFor(item)) {
@@ -107,6 +111,27 @@ class AmiliousMonkeyListener : InteractionListener {
             }
             true
         }
+    }
+
+    private fun drinkAlcohol(player: Player, usedId: Int, with: Node): Boolean {
+        val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+        if (live == null || with.id != MonkeyConfig.NPC_ID) {
+            sendMessage(player, "That is not your monkey.")
+            return true
+        }
+        val entry = FoodTable.get(usedId)
+        if (entry == null || FoodKind.ALCOHOL !in entry.kinds) {
+            sendMessage(player, "Gigos sniffs it and loses interest.")
+            return true
+        }
+        val one = Item(usedId, 1)
+        if (!player.inventory.remove(one)) return true
+        if (entry.leftover > 0) player.inventory.add(Item(entry.leftover, 1))
+        live.addDrunk(MonkeyConfig.DRUNK_BEER + entry.healMin * 2)
+        live.graphics(Graphics(277, 80))
+        sendMessage(player, "Gigos drinks ${a(entry.name)} and is getting crazy!")
+        GigosHudPacket.send(player, live)
+        return true
     }
 
     private fun useBanana(player: Player, usedId: Int, with: Node): Boolean {

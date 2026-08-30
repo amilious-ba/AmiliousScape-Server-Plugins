@@ -186,6 +186,25 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         }
     }
 
+    fun depositBagToBank(keepBananas: Boolean = true): Int {
+        var moved = 0
+        for (item in bag.toArray()) {
+            if (item == null) continue
+            if (keepBananas && isBananaItem(item)) continue
+            val room = owner.bank.getMaximumAdd(item)
+            if (room <= 0) continue
+            val move = Item(item.id, minOf(item.amount, room))
+            if (bag.remove(move) && owner.bank.add(move)) {
+                moved += move.amount
+            }
+        }
+        if (moved > 0) {
+            saveBag()
+            playAudio(owner, MonkeyConfig.SFX_SMALL)
+        }
+        return moved
+    }
+
     fun dismiss() {
         brain.interrupt()
         saveBag()

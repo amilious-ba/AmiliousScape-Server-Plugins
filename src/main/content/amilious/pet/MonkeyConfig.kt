@@ -25,4 +25,5 @@ object MonkeyConfig {
     const val ATTR_DUNG = "/save:amilious_monkey_dung"
     const val ATTR_EAT = "/save:amilious_monkey_eat"
     const val ATTR_B2B = "/save:amilious_monkey_b2b"
+    const val ATTR_FEED = "/save:amilious_monkey_feed"
 }

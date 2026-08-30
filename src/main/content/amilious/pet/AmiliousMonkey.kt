@@ -3,6 +3,7 @@ package content.amilious.pet
 
 import content.amilious.pet.actions.BonesToBananasAction
 import content.amilious.pet.actions.EatBananaAction
+import content.amilious.pet.actions.FeedOwnerAction
 import content.amilious.pet.actions.FollowIdleAction
 import content.amilious.pet.actions.FollowIfFarAction
 import content.amilious.pet.actions.LootAction
@@ -28,6 +29,8 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     val bag = Container(MonkeyConfig.BOB_SIZE)
     var ownerIdleTicks = 0
         private set
+    var outOfCombatTicks = 0
+        private set
     private var lastOwnerX = Int.MIN_VALUE
     private var lastOwnerY = Int.MIN_VALUE
     private var lastOwnerHp = -1
@@ -38,6 +41,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     init {
         brain
             .addAction(FollowIfFarAction())
+            .addAction(FeedOwnerAction())
             .addAction(PickBananaTreeAction())
             .addAction(EatBananaAction())
             .addAction(BonesToBananasAction())
@@ -51,6 +55,18 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     fun eatEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_EAT, true)
     fun b2bEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_B2B, true)
     fun lootEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_LOOT, true)
+    fun feedEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_FEED, true)
+
+    fun ownerInCombat(): Boolean {
+        val p = owner
+        if (p.inCombat()) return true
+        val pulse = p.properties.combatPulse
+        return pulse != null && pulse.isAttacking
+    }
+
+    private fun tickCombatIdle() {
+        if (ownerInCombat()) outOfCombatTicks = 0 else outOfCombatTicks++
+    }
 
     fun hunger(): Int = owner.getAttribute(MonkeyConfig.ATTR_HUNGER, MonkeyConfig.HUNGER_MAX)
 
@@ -160,6 +176,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
             return
         }
         noteOwnerIdle()
+        tickCombatIdle()
         brain.tick()
         val name = brain.currentName()
         if (name != lastHudAction) {

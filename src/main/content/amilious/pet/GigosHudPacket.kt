@@ -19,6 +19,7 @@ object GigosHudPacket {
         val dungOn = player.getAttribute(MonkeyConfig.ATTR_DUNG, true)
         val eatOn = player.getAttribute(MonkeyConfig.ATTR_EAT, true)
         val b2bOn = player.getAttribute(MonkeyConfig.ATTR_B2B, true)
+        val feedOn = player.getAttribute(MonkeyConfig.ATTR_FEED, true)
         val buf = IoBuffer(OPCODE, PacketHeader.BYTE)
         buf.p1(1)
         buf.p2(monkey.hunger().coerceIn(0, 65535))
@@ -39,6 +40,9 @@ object GigosHudPacket {
         buf.p1(6)
         buf.p1(if (b2bOn) 1 else 0)
         buf.putString("Bones2B")
+        buf.p1(7)
+        buf.p1(if (feedOn) 1 else 0)
+        buf.putString("Feed")
         player.session.write(buf)
     }
 }

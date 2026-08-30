@@ -10,58 +10,55 @@ import kotlin.math.min
 class AmiliousMonkeyBagUi : InterfaceListener {
 
     override fun defineInterfaceListeners() {
-        on(665, 0) { player, _, opcode, _, slot, _ ->
-            sendMessage(player, "store opcode=$opcode slot=$slot")
-            val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-                ?: return@on true
-            val invItem = player.inventory.get(slot) ?: return@on true
-            if (invItem.id == MonkeyConfig.BANANA_ID) return@on true
-            val want = amountFor(opcode)
-            if (want < 0) {
-                sendMessage(player, "Store-X not wired yet. Use Store-1/5/10/All.")
-                return@on true
-            }
-            val move = Item(invItem.id, min(want, invItem.amount))
-            if (!live.bag.hasSpaceFor(move)) {
-                sendMessage(player, "Gigos cannot carry any more.")
-                return@on true
-            }
-            if (player.inventory.remove(move) && live.bag.add(move)) {
-                live.saveBag()
-                live.openBagUi()
-            }
-            true
+        on(665) { player, _, opcode, button, slot, itemId ->
+            handle(player, store = true, opcode, button, slot, itemId)
         }
-
-        on(671, 27) { player, _, opcode, _, slot, _ ->
-            sendMessage(player, "take opcode=$opcode slot=$slot")
-            val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-                ?: return@on true
-            val bagItem = live.bag.get(slot) ?: return@on true
-            val want = amountFor(opcode)
-            if (want < 0) {
-                sendMessage(player, "Withdraw-X not wired yet. Use Withdraw-1/5/10/All.")
-                return@on true
-            }
-            val move = Item(bagItem.id, min(want, bagItem.amount))
-            if (!player.inventory.hasSpaceFor(move)) {
-                sendMessage(player, "You have no inventory space.")
-                return@on true
-            }
-            if (live.bag.remove(move) && player.inventory.add(move)) {
-                live.saveBag()
-                live.openBagUi()
-            }
-            true
+        on(671) { player, _, opcode, button, slot, itemId ->
+            handle(player, store = false, opcode, button, slot, itemId)
         }
     }
 
+    private fun handle(
+        player: core.game.node.entity.player.Player,
+        store: Boolean,
+        opcode: Int,
+        button: Int,
+        slot: Int,
+        itemId: Int
+    ): Boolean {
+        val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+            ?: return true
+        sendMessage(
+            player,
+            "${if (store) "STORE" else "TAKE"} op=$opcode btn=$button slot=$slot item=$itemId"
+        )
+        val from = if (store) player.inventory else live.bag
+        val to = if (store) live.bag else player.inventory
+        val src = from.get(slot) ?: return true
+        if (store && src.id == MonkeyConfig.BANANA_ID) return true
+        val want = amountFor(opcode)
+        if (want < 0) {
+            sendMessage(player, "X not wired. Use 1/5/10/All.")
+            return true
+        }
+        val move = Item(src.id, min(want, src.amount))
+        if (!to.hasSpaceFor(move)) {
+            sendMessage(player, if (store) "Gigos cannot carry any more." else "You have no inventory space.")
+            return true
+        }
+        if (from.remove(move) && to.add(move)) {
+            live.saveBag()
+            live.openBagUi()
+        }
+        return true
+    }
+
     private fun amountFor(opcode: Int): Int = when (opcode) {
-        155 -> 1
-        196 -> 5
-        124 -> 10
-        199 -> Int.MAX_VALUE
-        234 -> -1
+        155, 117 -> 1
+        196, 43, 145 -> 5
+        124, 129, 226 -> 10
+        199, 135, 20, 169 -> Int.MAX_VALUE
+        234, 9, 166 -> -1
         else -> 1
     }
 }

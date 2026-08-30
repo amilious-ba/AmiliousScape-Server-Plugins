@@ -7,7 +7,6 @@ import core.api.sendMessage
 import core.game.interaction.MovementPulse
 import core.game.world.map.Location
 import core.game.world.map.RegionManager
-import core.game.world.update.flag.context.Animation
 
 class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
 
@@ -18,8 +17,6 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
     private var wait = 0
     private var walkTicks = 0
     private var cool = 0
-    private var lastOwner = Location.create(0, 0, 0)
-    private var idleTicks = 0
     private var picksOnThis = 0
     private val rest = HashMap<String, Int>()
 
@@ -27,9 +24,6 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
 
     override fun cooldown(actor: AmiliousMonkey) {
         if (cool > 0) cool--
-        val here = actor.owner.location
-        if (here == lastOwner) idleTicks++ else idleTicks = 0
-        lastOwner = here
         val it = rest.iterator()
         while (it.hasNext()) {
             val e = it.next()
@@ -50,7 +44,6 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
         wait = 0
         walkTicks = 0
         picksOnThis = 0
-        sendMessage(actor.owner, "Gigos heads for a banana tree.")
         walkTo(actor)
     }
 
@@ -61,7 +54,6 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
                 walkTicks++
                 if (actor.location.getDistance(tile) <= 2.0) {
                     phase = Phase.PICK
-                    walkTicks = 0
                     return true
                 }
                 if (walkTicks > 25) return done(actor)
@@ -83,24 +75,15 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
                 actor.saveBag()
                 GigosHudPacket.send(actor.owner, actor)
                 sendMessage(actor.owner, "Gigos picks a banana.")
-                actor.animate(Animation(827))
+                // actor.animate(...)  // add later
                 picksOnThis++
                 if (picksOnThis >= PICKS_PER_TREE) {
                     rest[key(tile)] = TREE_REST
-                    dest = nearestTile(actor)
-                    picksOnThis = 0
-                    if (dest == null) {
-                        cool = 4
-                        return done(actor)
-                    }
-                    phase = Phase.WALK
-                    walkTicks = 0
-                    sendMessage(actor.owner, "Gigos moves to another tree.")
-                    walkTo(actor)
-                    return true
+                    cool = 6
+                    return done(actor)
                 }
                 phase = Phase.HOLD
-                wait = if (idleTicks >= 8) 2 else 5
+                wait = 3
                 return true
             }
             Phase.HOLD -> {

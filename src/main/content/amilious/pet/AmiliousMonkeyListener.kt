@@ -12,9 +12,7 @@ import core.plugin.Initializable
 @Initializable
 class AmiliousMonkeyListener : InteractionListener {
 
-    private val ids = intArrayOf(
-        6943, 7211, 7213, 7215, 7217, 7219, 7221, 7223, 7225, 7227
-    )
+    private val ids = intArrayOf(MonkeyConfig.NPC_ID)
 
     override fun defineListeners() {
         on(ids, IntType.NPC, "pick-up", "pickup", "pack") { player, node ->

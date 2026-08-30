@@ -3,13 +3,16 @@ package content.amilious.pet
 object MonkeyConfig {
     val OWNERS = setOf("wolfy")
 
-    const val NPC_ID = 6943
+    const val NPC_ID = 132
     const val BOB_SIZE = 30
     const val FOLLOW_DIST = 12
     const val LOOT_RANGE = 6
     const val DUNG_COOLDOWN = 8
     const val BANANA_ID = 1963
     const val BANANA_NOTE_ID = 1964
+    const val ANIM_ATTACK = 220
+    const val ANIM_BLOCK = 221
+    const val ANIM_DEATH = 223
 
     const val HUNGER_MAX = 100
     const val HUNGER_BANANA = 25

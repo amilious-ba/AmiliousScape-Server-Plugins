@@ -7,6 +7,7 @@ import core.api.sendMessage
 import core.game.node.entity.combat.ImpactHandler
 import core.game.node.entity.impl.Projectile
 import core.game.world.map.RegionManager
+import core.game.world.update.flag.context.Animation
 import core.game.world.update.flag.context.Graphics
 
 class ThrowDungAction : CompanionAction<AmiliousMonkey> {
@@ -54,7 +55,7 @@ class ThrowDungAction : CompanionAction<AmiliousMonkey> {
                 return true
             }
             1 -> {
-                actor.animate(actor.properties.attackAnimation)
+                actor.animate(Animation(MonkeyConfig.ANIM_ATTACK))
                 phase = 2
                 return true
             }

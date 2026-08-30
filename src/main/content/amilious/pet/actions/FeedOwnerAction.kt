@@ -27,6 +27,7 @@ class FeedOwnerAction : CompanionAction<AmiliousMonkey> {
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (!actor.feedEnabled()) return false
         if (cool > 0) return false
+        if (actor.hunger() < MonkeyConfig.HUNGER_FEED) return false
         if (actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) return false
         val missing = FoodTable.missingHp(actor.owner)
         val max = actor.owner.skills.maximumLifepoints
@@ -55,6 +56,10 @@ class FeedOwnerAction : CompanionAction<AmiliousMonkey> {
                 return true
             }
             Phase.FEED -> {
+                if (actor.hunger() < MonkeyConfig.HUNGER_FEED) {
+                    cool = 8
+                    return false
+                }
                 val missing = FoodTable.missingHp(actor.owner)
                 val max = actor.owner.skills.maximumLifepoints
                 if (max <= 0 || actor.owner.skills.lifepoints * 2 > max) return false
@@ -72,6 +77,7 @@ class FeedOwnerAction : CompanionAction<AmiliousMonkey> {
                 if (entry.leftover > 0) actor.bag.add(Item(entry.leftover, 1))
                 actor.owner.animate(Animation(829))
                 actor.owner.skills.heal(entry.healMin)
+                actor.addHunger(-MonkeyConfig.HUNGER_FEED)
                 actor.saveBag()
                 GigosHudPacket.send(actor.owner, actor)
                 sendMessage(actor.owner, "Gigos fed you ${a(entry.name)}.")

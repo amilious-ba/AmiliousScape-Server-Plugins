@@ -20,6 +20,8 @@ object MonkeyConfig {
     const val HUNGER_THROW = 8
     const val HUNGER_LOOT = 1
     const val HUNGER_B2B = 5
+    const val HUNGER_PICK = 2
+    const val HUNGER_FEED = 4
 
     const val ATTR_OWNED = "/save:amilious_monkey_owned"
     const val ATTR_ACTIVE = "amilious_monkey"

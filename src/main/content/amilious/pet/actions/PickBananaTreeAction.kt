@@ -40,6 +40,7 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (cool > 0) return false
         if (idleTicks < IDLE_NEED) return false
+        if (actor.hunger() < MonkeyConfig.HUNGER_PICK) return false
         if (actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) return false
         return nearestTile(actor) != null
     }
@@ -77,11 +78,16 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
                     walkTo(actor)
                     return true
                 }
+                if (actor.hunger() < MonkeyConfig.HUNGER_PICK) {
+                    cool = 8
+                    return false
+                }
                 if (!actor.addBananasNoted(1)) {
                     sendMessage(actor.owner, "Gigos wants a banana but his pack is full.")
                     cool = 25
                     return false
                 }
+                actor.addHunger(-MonkeyConfig.HUNGER_PICK)
                 actor.saveBag()
                 GigosHudPacket.send(actor.owner, actor)
                 sendMessage(actor.owner, "Gigos picks a banana.")

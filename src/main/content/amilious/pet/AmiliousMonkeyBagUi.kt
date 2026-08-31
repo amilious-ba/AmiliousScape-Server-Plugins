@@ -19,7 +19,24 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
                 ?: return@on true
             val invItem = player.inventory.get(slot) ?: return@on true
-            if (invItem.id == MonkeyConfig.BANANA_ID) return@on true
+            if (live.isBananaItem(invItem) || invItem.id == MonkeyConfig.BANANA_ID) {
+                val want = amountFor(opcode)
+                if (want < 0) {
+                    sendMessage(player, "Store-X not wired yet. Use Store-1/5/10/All.")
+                    return@on true
+                }
+                val n = min(want, invItem.amount)
+                if (!player.inventory.remove(Item(invItem.id, n))) return@on true
+                if (live.addBananasNoted(n)) {
+                    live.saveBag()
+                    live.openBagUi()
+                    sendMessage(player, "Gigos notes the bananas.")
+                } else {
+                    player.inventory.add(Item(invItem.id, n))
+                    sendMessage(player, "Gigos cannot carry any more.")
+                }
+                return@on true
+            }
             val want = amountFor(opcode)
             if (want < 0) {
                 sendMessage(player, "Store-X not wired yet. Use Store-1/5/10/All.")

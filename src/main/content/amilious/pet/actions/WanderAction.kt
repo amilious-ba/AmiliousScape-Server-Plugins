@@ -43,7 +43,7 @@ class WanderAction(rank: Int = 10) :
                 actor.pulseManager.run(object : MovementPulse(actor, tile) {
                     override fun pulse(): Boolean = true
                 })
-                goToPhase()
+                nextPhase()
                 return true
             }
             Phase.HOLD -> {

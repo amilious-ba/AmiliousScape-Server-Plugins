@@ -61,7 +61,7 @@ class PickBananaTreeAction(rank: Int = 40) :
             Phase.WALK -> {
                 walkTicks++
                 if (actor.location.getDistance(tile) <= 2.0) {
-                    goToPhase()
+                    nextPhase()
                     return true
                 }
                 if (walkTicks > 25) return false
@@ -70,7 +70,7 @@ class PickBananaTreeAction(rank: Int = 40) :
             }
             Phase.PICK -> {
                 if (actor.location.getDistance(tile) > 2.0) {
-                    setPhase(Phase.WALK)
+                    goToPhase(Phase.WALK)
                     walkTicks = 0
                     walkTo(actor)
                     return true
@@ -95,14 +95,14 @@ class PickBananaTreeAction(rank: Int = 40) :
                     rest(6)
                     return false
                 }
-                setPhase(Phase.HOLD)
+                goToPhase(Phase.HOLD)
                 wait = 3
                 return true
             }
             Phase.HOLD -> {
                 wait--
                 if (wait > 0) return true
-                setPhase(Phase.PICK)
+                goToPhase(Phase.PICK)
                 return true
             }
         }

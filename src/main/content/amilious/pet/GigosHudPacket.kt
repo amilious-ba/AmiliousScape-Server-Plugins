@@ -1,6 +1,6 @@
 package content.amilious.pet
 
-
+//
 import core.net.packet.IoBuffer
 import core.net.packet.PacketHeader
 import core.game.node.entity.player.Player

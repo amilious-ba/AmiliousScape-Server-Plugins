@@ -33,6 +33,7 @@ object MonkeyConfig {
     const val ANIM_ATTACK = 220
     const val ANIM_BLOCK = 221
     const val ANIM_DEATH = 223
+    const val ANIM_STAND = 222
 
 
     //sounds

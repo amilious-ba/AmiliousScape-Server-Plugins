@@ -32,6 +32,7 @@ class NapAction(rank: Int = 10) :
 
     override fun tick(actor: AmiliousMonkey): Boolean {
         if (actor.ownerIdleTicks < 2 || actor.ownerInCombat()) {
+            stand(actor)
             rest(8)
             return false
         }
@@ -43,9 +44,10 @@ class NapAction(rank: Int = 10) :
             Phase.SLEEP -> {
                 slept++
                 if (slept % 8 == 0) {
-                    actor.graphics(Graphics(277, -4))
+                    actor.graphics(Graphics(277, -10))
                 }
                 if (slept >= 40) {
+                    stand(actor)
                     rest(20)
                     return false
                 }
@@ -53,4 +55,21 @@ class NapAction(rank: Int = 10) :
             }
         }
     }
+
+    private fun stand(actor: AmiliousMonkey) {
+        try {
+            actor.animator.animate(null)
+        } catch (_: Exception) {
+        }
+        actor.animate(Animation(-1))
+        val stand = actor.definition?.standAnimation ?: MonkeyConfig.ANIM_STAND
+        if (stand > 0) {
+            actor.animate(Animation(stand))
+        }
+        actor.pulseManager.clear()
+        actor.pulseManager.run(object : core.game.interaction.MovementPulse(actor, actor.owner) {
+            override fun pulse(): Boolean = true
+        })
+    }
+
 }

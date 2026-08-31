@@ -59,4 +59,7 @@ object MonkeyConfig {
     fun npcId(player: Player): Int =
         if (player.getAttribute(ATTR_DARK, true)) NPC_DARK else NPC_LIGHT
 
+    fun isGigosId(id: Int): Boolean =
+        id == NPC_DARK || id == NPC_LIGHT
+
 }

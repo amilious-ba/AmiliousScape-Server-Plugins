@@ -16,7 +16,7 @@ import core.plugin.Initializable
 @Initializable
 class AmiliousMonkeyListener : InteractionListener {
 
-    private val ids = intArrayOf(MonkeyConfig.NPC_ID)
+    private val ids = intArrayOf(MonkeyConfig.NPC_DARK, MonkeyConfig.NPC_LIGHT)
 
     private val alcoholIds = intArrayOf(
         1917, // Beer
@@ -92,7 +92,7 @@ class AmiliousMonkeyListener : InteractionListener {
 
         onUseWith(IntType.NPC, Int.MAX_VALUE, *ids) { player, used, with ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-            if (live == null || with.id != MonkeyConfig.NPC_ID) {
+            if (live == null || with !== live) {
                 return@onUseWith false
             }
             if (live.isBananaItem(Item(used.id, 1))) {
@@ -116,7 +116,7 @@ class AmiliousMonkeyListener : InteractionListener {
 
     private fun drinkAlcohol(player: Player, usedId: Int, with: Node): Boolean {
         val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-        if (live == null || with.id != MonkeyConfig.NPC_ID) {
+        if (live == null || with !== live) {
             sendMessage(player, "That is not your monkey.")
             return true
         }

@@ -1,10 +1,14 @@
 package content.amilious.pet
 
+import core.game.node.entity.player.Player
+
 object MonkeyConfig {
     val OWNERS = setOf("wolfy")
 
     //Monkey config
-    const val NPC_ID = 132          //the npc that is spawned
+    const val NPC_DARK = 132
+    const val NPC_LIGHT = 6943
+    //const val NPC_ID = 132          //the npc that is spawned
     const val BOB_SIZE = 30         //the inventory size of pet
     const val FOLLOW_DIST = 12      //the distance the pet will follow the player
     const val LOOT_RANGE = 6        //the distance the pet will loot from the player
@@ -50,5 +54,9 @@ object MonkeyConfig {
     const val ATTR_FEED = "/save:amilious_monkey_feed"
     const val ATTR_PICK = "/save:amilious_monkey_pick"
     const val ATTR_UNBURDEN = "/save:amilious_monkey_unburden"
+    const val ATTR_DARK = "/save:amilious_gigos_dark"
+
+    fun npcId(player: Player): Int =
+        if (player.getAttribute(ATTR_DARK, true)) NPC_DARK else NPC_LIGHT
 
 }

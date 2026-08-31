@@ -137,6 +137,14 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
                     GigosHudPacket.send(player, live!!)
                     notify(player, if (!on) "Gigos will unburden you." else "Gigos will not unburden you.")
                 }
+                10 -> {
+                    if (live == null) reject(player, "Gigos is not out.")
+                    val on = player.getAttribute(MonkeyConfig.ATTR_DARK, true)
+                    setAttribute(player, MonkeyConfig.ATTR_DARK, !on)
+                    live!!.applyModel()
+                    GigosHudPacket.send(player, live)
+                    notify(player, if (!on) "Gigos is dark." else "Gigos is light.")
+                }
                 else -> reject(player, "Unknown monkey action.")
             }
         }

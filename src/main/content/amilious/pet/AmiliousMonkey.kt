@@ -26,7 +26,7 @@ import core.game.node.item.Item
 import core.game.world.map.RegionManager
 import core.game.world.repository.Repository
 
-class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
+class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : NPC(id) {
 
     val bag = Container(MonkeyConfig.BOB_SIZE)
     var ownerIdleTicks = 0
@@ -53,6 +53,11 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
             .addAction(ThrowDungAction())
             .addAction(WanderAction())
             .addAction(FollowIdleAction())
+    }
+
+    fun applyModel() {
+        val want = MonkeyConfig.npcId(owner)
+        if (id != want) transform(want)
     }
 
     fun dungEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_DUNG, true)
@@ -97,8 +102,8 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         }
         location = owner.location.transform(1, 0, 0)
         init()
+        applyModel()
         name = "Gigos"
-        definition.name = "Gigos"
         isWalks = true
         interaction.set(Option("Pack", 0))
         interaction.set(Option("Talk-to", 1))

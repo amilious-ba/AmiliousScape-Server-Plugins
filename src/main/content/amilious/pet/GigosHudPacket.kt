@@ -60,6 +60,7 @@ object GigosHudPacket {
         val feedOn = player.getAttribute(MonkeyConfig.ATTR_FEED, true)
         val pickOn = player.getAttribute(MonkeyConfig.ATTR_PICK, true)
         val unburdenOn = player.getAttribute(MonkeyConfig.ATTR_UNBURDEN, true)
+        val darkOn = player.getAttribute(MonkeyConfig.ATTR_DARK, true)
 
         val buf = IoBuffer(OPCODE, PacketHeader.BYTE)
         buf.p1(2)
@@ -96,6 +97,9 @@ object GigosHudPacket {
         buf.p1(9)
         buf.p1(if (unburdenOn) 1 else 0)
         buf.putString("Unburden")
+        buf.p1(10)
+        buf.p1(if (darkOn) 1 else 0)
+        buf.putString("Dark")
         player.session.write(buf)
     }
 

@@ -189,7 +189,7 @@ class CompanionBrain<T>(private val actor: T) {
             }
             if (keep && current != null) return
         }
-        current = actions.firstOrNull { it.canStart(actor) }
+        current = pickNext()
         current?.start(actor)
         val next = current ?: return
         if (!next.tick(actor)) current = null
@@ -248,5 +248,12 @@ class CompanionBrain<T>(private val actor: T) {
     }
 
     //#endregion #######################################################################################################
+
+    private fun pickNext(): ICompanionAction<T>? {
+        val ready = actions.filter { it.canStart(actor) }
+        if (ready.isEmpty()) return null
+        val best = ready.maxOf { it.priority() }
+        return ready.filter { it.priority() == best }.random()
+    }
 
 }

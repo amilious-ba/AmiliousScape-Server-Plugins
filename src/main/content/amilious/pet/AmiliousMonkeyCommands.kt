@@ -51,6 +51,27 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
             notify(player, if (moved == 0) "Gigos is not carrying anything." else "You take Gigos' pack.")
         }
 
+        define(
+            "gigosani",
+            Privilege.STANDARD,
+            "::gigosani id",
+            "Play an animation on Gigos."
+        ) { player, args ->
+            if (args.size < 2) {
+                reject(player, "Usage: ::gigosani id")
+            }
+            val id = args[1].toIntOrNull()
+            if (id == null || id < 0) {
+                reject(player, "Usage: ::gigosani id")
+            }
+            val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+            if (live == null) {
+                reject(player, "Gigos is not out.")
+            }
+            live!!.animate(core.game.world.update.flag.context.Animation(id!!))
+            notify(player, "Gigos animation $id")
+        }
+
         define("gigosop", Privilege.STANDARD, "::gigosop slot", "Monkey menu actions.") { player, args ->
             if (args.size < 2) {
                 reject(player, "Invalid monkey action.")

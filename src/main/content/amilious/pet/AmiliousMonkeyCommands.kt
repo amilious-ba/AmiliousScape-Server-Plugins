@@ -102,6 +102,20 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
                     GigosHudPacket.send(player, live!!)
                     notify(player, if (!on) "Gigos will feed you." else "Gigos will not feed you.")
                 }
+                8 -> {
+                    if (live == null) reject(player, "Gigos is not out.")
+                    val on = player.getAttribute(MonkeyConfig.ATTR_PICK, true)
+                    setAttribute(player, MonkeyConfig.ATTR_PICK, !on)
+                    GigosHudPacket.send(player, live!!)
+                    notify(player, if (!on) "Gigos will pick bananas." else "Gigos will not pick bananas.")
+                }
+                9 -> {
+                    if (live == null) reject(player, "Gigos is not out.")
+                    val on = player.getAttribute(MonkeyConfig.ATTR_UNBURDEN, true)
+                    setAttribute(player, MonkeyConfig.ATTR_UNBURDEN, !on)
+                    GigosHudPacket.send(player, live!!)
+                    notify(player, if (!on) "Gigos will unburden you." else "Gigos will not unburden you.")
+                }
                 else -> reject(player, "Unknown monkey action.")
             }
         }

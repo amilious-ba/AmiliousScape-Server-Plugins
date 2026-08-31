@@ -28,6 +28,8 @@ class NapAction(rank: Int = 10) :
     override fun start(actor: AmiliousMonkey) {
         super.start(actor)
         slept = 0
+        actor.pulseManager.clear()
+        actor.walkingQueue.reset()
         actor.animate(Animation(MonkeyConfig.ANIM_DEATH))
         actor.graphics(Graphics(277, 20))
     }
@@ -59,19 +61,17 @@ class NapAction(rank: Int = 10) :
     }
 
     private fun stand(actor: AmiliousMonkey) {
+        actor.pulseManager.clear()
         try {
             actor.animator.animate(null)
         } catch (_: Exception) {
         }
-        actor.animate(Animation(-1))
-        val stand = actor.definition?.standAnimation ?: MonkeyConfig.ANIM_STAND
-        if (stand > 0) {
-            actor.animate(Animation(stand))
+        val standId = actor.definition?.standAnimation ?: MonkeyConfig.ANIM_STAND
+        if (standId > 0) {
+            actor.animate(Animation(standId))
+        } else {
+            actor.animate(Animation(-1))
         }
-        actor.pulseManager.clear()
-        actor.pulseManager.run(object : core.game.interaction.MovementPulse(actor, actor.owner) {
-            override fun pulse(): Boolean = true
-        })
     }
 
 }

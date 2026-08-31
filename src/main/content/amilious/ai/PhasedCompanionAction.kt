@@ -86,7 +86,7 @@ abstract class PhasedCompanionAction<T, P : Enum<P>>(actionName: String, rank: I
      *
      * @return true if the phase was successfully advanced to the next phase, false if the current phase is the last one.
      */
-    protected fun nextPhase(): Boolean {
+    protected fun goToPhase(): Boolean {
         val i = phase.ordinal + 1
         if (i >= all.size) return false
         phase = all[i]

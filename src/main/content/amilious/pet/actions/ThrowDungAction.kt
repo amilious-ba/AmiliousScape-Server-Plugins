@@ -10,7 +10,6 @@ import core.api.sendMessage
 import core.game.node.entity.combat.ImpactHandler
 import core.game.node.entity.impl.Projectile
 import core.game.node.entity.npc.NPC
-import core.game.world.map.RegionManager
 import core.game.world.repository.Repository
 import core.game.world.update.flag.context.Animation
 import core.game.world.update.flag.context.Graphics
@@ -50,7 +49,7 @@ class ThrowDungAction(rank: Int = 50) :
                 actor.face(victim)
                 actor.animate(Animation(MonkeyConfig.ANIM_ATTACK))
                 GigosHudPacket.send(actor.owner, actor)
-                nextPhase()
+                goToPhase()
                 return true
             }
             Phase.CAST -> {
@@ -59,7 +58,7 @@ class ThrowDungAction(rank: Int = 50) :
                     playAudio(actor.owner, MonkeyConfig.SFX_OOK)
                 } catch (_: Exception) {
                 }
-                nextPhase()
+                goToPhase()
                 return true
             }
             Phase.HIT -> {

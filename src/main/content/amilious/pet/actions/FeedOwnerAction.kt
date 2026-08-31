@@ -44,7 +44,7 @@ class FeedOwnerAction(rank: Int = 80) :
             Phase.WALK -> {
                 walkTicks++
                 if (actor.location.getDistance(actor.owner.location) <= 1.5) {
-                    nextPhase()
+                    goToPhase()
                     return true
                 }
                 if (walkTicks > 25) return false

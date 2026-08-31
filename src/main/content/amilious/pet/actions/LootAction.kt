@@ -56,7 +56,7 @@ class LootAction(rank: Int = 60) :
             Phase.WALK -> {
                 walkTicks++
                 if (actor.location.getDistance(dest) <= 1.5) {
-                    nextPhase()
+                    goToPhase()
                     return true
                 }
                 if (walkTicks > 25) return false
@@ -66,7 +66,7 @@ class LootAction(rank: Int = 60) :
             Phase.SCOOP -> {
                 scoop(actor, dest)
                 wait = 3
-                nextPhase()
+                goToPhase()
                 return true
             }
             Phase.HOLD -> {

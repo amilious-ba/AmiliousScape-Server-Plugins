@@ -202,7 +202,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         if (n <= 0) return
         owner.setAttribute(MonkeyConfig.ATTR_DRUNK, n - 1)
         if (n % 4 == 0) {
-            graphics(core.game.world.update.flag.context.Graphics(277, 20))
+            graphics(core.game.world.update.flag.context.Graphics(277, 8))
         }
     }
 

@@ -1,5 +1,6 @@
 package content.amilious.pet.actions
 
+import content.amilious.ai.SimpleCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
 import content.amilious.pet.MonkeyConfig
@@ -7,21 +8,21 @@ import core.api.playAudio
 import core.api.sendMessage
 import core.game.node.item.Item
 
-class UnburdenAction : CompanionAction<AmiliousMonkey> {
+class UnburdenAction(rank: Int = 70) :
+    SimpleCompanionAction<AmiliousMonkey>("unburden", rank) {
 
-    private var cool = 0
     private var warned = 0
 
-    override fun name() = "unburden"
+    override fun getPhaseName() = "Unburden"
 
     override fun cooldown(actor: AmiliousMonkey) {
-        if (cool > 0) cool--
+        super.cooldown(actor)
         if (warned > 0) warned--
     }
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
+        if (!ready()) return false
         if (!actor.unburdenEnabled()) return false
-        if (cool > 0) return false
         if (actor.hunger() < MonkeyConfig.HUNGER_LOOT) return false
         if (!actor.ownerGathering()) return false
         if (actor.owner.inventory.freeSlots() > MonkeyConfig.UNBURDEN_FREE) return false
@@ -30,12 +31,12 @@ class UnburdenAction : CompanionAction<AmiliousMonkey> {
 
     override fun tick(actor: AmiliousMonkey): Boolean {
         if (actor.hunger() < MonkeyConfig.HUNGER_LOOT) {
-            cool = 8
+            rest(8)
             return false
         }
         val item = nextItem(actor)
         if (item == null) {
-            cool = 4
+            rest(4)
             return false
         }
         val room = actor.bag.getMaximumAdd(item)
@@ -44,7 +45,7 @@ class UnburdenAction : CompanionAction<AmiliousMonkey> {
                 sendMessage(actor.owner, "Gigos cannot carry any more.")
                 warned = 25
             }
-            cool = 8
+            rest(8)
             return false
         }
         val move = Item(item.id, minOf(item.amount, room))
@@ -55,7 +56,7 @@ class UnburdenAction : CompanionAction<AmiliousMonkey> {
             playAudio(actor.owner, MonkeyConfig.SFX_SMALL)
             sendMessage(actor.owner, "Gigos takes the ${move.name.lowercase()} from you.")
         }
-        cool = 2
+        rest(2)
         return false
     }
 
@@ -93,4 +94,5 @@ class UnburdenAction : CompanionAction<AmiliousMonkey> {
             1947, 1942, 1987
         )
     }
+
 }

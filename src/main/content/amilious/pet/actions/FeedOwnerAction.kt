@@ -1,5 +1,6 @@
 package content.amilious.pet.actions
 
+import content.amilious.ai.PhasedCompanionAction
 import content.amilious.food.FoodFilter
 import content.amilious.food.FoodTable
 import content.amilious.pet.AmiliousMonkey
@@ -10,23 +11,18 @@ import core.game.interaction.MovementPulse
 import core.game.node.item.Item
 import core.game.world.update.flag.context.Animation
 
-class FeedOwnerAction : CompanionAction<AmiliousMonkey> {
+class FeedOwnerAction(rank: Int = 80) :
+    PhasedCompanionAction<AmiliousMonkey, FeedOwnerAction.Phase>(
+        "feed", rank, Phase::class
+    ) {
 
-    private enum class Phase { WALK, FEED }
+    enum class Phase { WALK, FEED }
 
-    private var phase = Phase.WALK
-    private var cool = 0
     private var walkTicks = 0
 
-    override fun name() = "feed"
-
-    override fun cooldown(actor: AmiliousMonkey) {
-        if (cool > 0) cool--
-    }
-
     override fun canStart(actor: AmiliousMonkey): Boolean {
+        if (!ready()) return false
         if (!actor.feedEnabled()) return false
-        if (cool > 0) return false
         if (actor.hunger() < MonkeyConfig.HUNGER_FEED) return false
         if (actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) return false
         val missing = FoodTable.missingHp(actor.owner)
@@ -36,7 +32,7 @@ class FeedOwnerAction : CompanionAction<AmiliousMonkey> {
     }
 
     override fun start(actor: AmiliousMonkey) {
-        phase = Phase.WALK
+        super.start(actor)
         walkTicks = 0
         walkTo(actor)
     }
@@ -48,7 +44,7 @@ class FeedOwnerAction : CompanionAction<AmiliousMonkey> {
             Phase.WALK -> {
                 walkTicks++
                 if (actor.location.getDistance(actor.owner.location) <= 1.5) {
-                    phase = Phase.FEED
+                    nextPhase()
                     return true
                 }
                 if (walkTicks > 25) return false
@@ -57,7 +53,7 @@ class FeedOwnerAction : CompanionAction<AmiliousMonkey> {
             }
             Phase.FEED -> {
                 if (actor.hunger() < MonkeyConfig.HUNGER_FEED) {
-                    cool = 8
+                    rest(8)
                     return false
                 }
                 val missing = FoodTable.missingHp(actor.owner)
@@ -65,13 +61,13 @@ class FeedOwnerAction : CompanionAction<AmiliousMonkey> {
                 if (max <= 0 || actor.owner.skills.lifepoints * 2 > max) return false
                 val pick = FoodTable.bestFor(actor.bag, missing, FoodFilter.PLAIN, allowWaste = false)
                 if (pick == null) {
-                    cool = 8
+                    rest(8)
                     return false
                 }
                 val (item, entry) = pick
                 val bite = Item(item.id, 1)
                 if (!actor.bag.remove(bite)) {
-                    cool = 8
+                    rest(8)
                     return false
                 }
                 if (entry.leftover > 0) actor.bag.add(Item(entry.leftover, 1))
@@ -81,7 +77,7 @@ class FeedOwnerAction : CompanionAction<AmiliousMonkey> {
                 actor.saveBag()
                 GigosHudPacket.send(actor.owner, actor)
                 sendMessage(actor.owner, "Gigos fed you ${a(entry.name)}.")
-                cool = 5
+                rest(5)
                 return false
             }
         }

@@ -1,6 +1,7 @@
 package content.amilious.pet
 
 
+import content.amilious.ai.CompanionBrain
 import content.amilious.pet.actions.BonesToBananasAction
 import content.amilious.pet.actions.EatBananaAction
 import content.amilious.pet.actions.FeedOwnerAction
@@ -151,6 +152,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     }
 
     fun pickEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_PICK, true)
+
     fun unburdenEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_UNBURDEN, true)
 
     fun ownerGathering(): Boolean {
@@ -171,6 +173,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     }
 
     fun drunkTicks(): Int = owner.getAttribute(MonkeyConfig.ATTR_DRUNK, 0)
+
     fun isDrunk(): Boolean = drunkTicks() > 0
 
     fun addDrunk(ticks: Int) {
@@ -242,7 +245,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         noteOwnerIdle()
         tickCombatIdle()
         brain.tick()
-        val name = brain.currentName()
+        val name = brain.getCurrentActionName()
         if (name != lastHudAction) {
             lastHudAction = name
             GigosHudPacket.send(owner, this)
@@ -345,6 +348,6 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         return n
     }
 
-    fun brainActionName(): String = brain.currentName()
+    fun brainActionName(): String = brain.getCurrentActionName()
 
 }

@@ -1,5 +1,7 @@
 package content.amilious.pet.actions
 
+
+import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
 import content.amilious.pet.MonkeyConfig
@@ -11,19 +13,20 @@ import core.game.node.item.GroundItemManager
 import core.game.node.item.Item
 import core.game.world.map.Location
 
-class LootAction : CompanionAction<AmiliousMonkey> {
+class LootAction(rank: Int = 60) :
+    PhasedCompanionAction<AmiliousMonkey, LootAction.Phase>(
+        "loot", rank, Phase::class
+    ) {
 
-    private enum class Phase { WALK, SCOOP, HOLD }
+    enum class Phase { WALK, SCOOP, HOLD }
 
-    private var phase = Phase.WALK
     private var tile: Location? = null
     private var wait = 0
     private var walkTicks = 0
     private var fullWait = 0
 
-    override fun name() = "loot"
-
     override fun cooldown(actor: AmiliousMonkey) {
+        super.cooldown(actor)
         if (fullWait > 0) fullWait--
     }
 
@@ -40,8 +43,8 @@ class LootAction : CompanionAction<AmiliousMonkey> {
     }
 
     override fun start(actor: AmiliousMonkey) {
+        super.start(actor)
         tile = nearest(actor)?.location
-        phase = Phase.WALK
         wait = 0
         walkTicks = 0
         walkTo(actor)
@@ -53,7 +56,7 @@ class LootAction : CompanionAction<AmiliousMonkey> {
             Phase.WALK -> {
                 walkTicks++
                 if (actor.location.getDistance(dest) <= 1.5) {
-                    phase = Phase.SCOOP
+                    nextPhase()
                     return true
                 }
                 if (walkTicks > 25) return false
@@ -62,8 +65,8 @@ class LootAction : CompanionAction<AmiliousMonkey> {
             }
             Phase.SCOOP -> {
                 scoop(actor, dest)
-                phase = Phase.HOLD
                 wait = 3
+                nextPhase()
                 return true
             }
             Phase.HOLD -> {

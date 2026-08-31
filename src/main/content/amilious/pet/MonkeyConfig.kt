@@ -3,30 +3,42 @@ package content.amilious.pet
 object MonkeyConfig {
     val OWNERS = setOf("wolfy")
 
-    const val NPC_ID = 132
-    const val BOB_SIZE = 30
-    const val FOLLOW_DIST = 12
-    const val LOOT_RANGE = 6
-    const val DUNG_COOLDOWN = 8
-    const val BANANA_ID = 1963
-    const val BANANA_NOTE_ID = 1964
+    //Monkey config
+    const val NPC_ID = 132          //the npc that is spawned
+    const val BOB_SIZE = 30         //the inventory size of pet
+    const val FOLLOW_DIST = 12      //the distance the pet will follow the player
+    const val LOOT_RANGE = 6        //the distance the pet will loot from the player
+    const val DUNG_COOLDOWN = 8     //time between dung throws
+    const val HUNGER_MAX = 100      //max hunger value
+    const val HUNGER_BANANA = 25    //hunger each banana restores
+    const val HUNGER_THROW = 8      //hunger cost for throwing
+    const val HUNGER_LOOT = 1       //hunger cost for looting
+    const val HUNGER_B2B = 5        //hunger cost for converting bones to bananas
+    const val HUNGER_PICK = 2       //hunger cost for picking bananas
+    const val HUNGER_FEED = 4       //hunger cost for feeding owner
+    const val UNBURDEN_FREE = 4     //start taking when you have this many empty slots or fewer
+    const val DRUNK_BEER = 50
+
+
+    //Item Ids
+    const val BANANA_ID = 1963      //the id of the banana item
+    const val BANANA_NOTE_ID = 1964 //the id of noted bananas
+
+
+    //Animations
     const val ANIM_ATTACK = 220
     const val ANIM_BLOCK = 221
     const val ANIM_DEATH = 223
-    const val RUN_GAP = 2.5
 
-    const val HUNGER_MAX = 100
-    const val HUNGER_BANANA = 25
-    const val HUNGER_THROW = 8
-    const val HUNGER_LOOT = 1
-    const val HUNGER_B2B = 5
-    const val HUNGER_PICK = 2
-    const val HUNGER_FEED = 4
 
-    const val UNBURDEN_FREE = 4   // start taking when you have this many empty slots or fewer
+    //sounds
+    const val SFX_PLAYFUL = 633   // summon / dismiss
+    const val SFX_OOK = 630       // throw, pick, eat, drunk
+    const val SFX_SMALL = 634     // loot, unburden, empty
 
+
+    //Attributes
     const val ATTR_DRUNK = "amilious_gigos_drunk" // ticks remaining, not saved
-    const val DRUNK_BEER = 50
     const val ATTR_OWNED = "/save:amilious_monkey_owned"
     const val ATTR_ACTIVE = "amilious_monkey"
     const val ATTR_BAG = "/save:amilious_monkey_bag"
@@ -38,9 +50,5 @@ object MonkeyConfig {
     const val ATTR_FEED = "/save:amilious_monkey_feed"
     const val ATTR_PICK = "/save:amilious_monkey_pick"
     const val ATTR_UNBURDEN = "/save:amilious_monkey_unburden"
-
-    const val SFX_PLAYFUL = 633   // summon / dismiss
-    const val SFX_OOK = 630       // throw, pick, eat, drunk
-    const val SFX_SMALL = 634     // loot, unburden, empty
 
 }

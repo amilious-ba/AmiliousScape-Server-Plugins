@@ -1,25 +1,20 @@
 package content.amilious.pet.actions
 
+import content.amilious.ai.SimpleCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
 import content.amilious.pet.MonkeyConfig
 import core.api.playAudio
 import core.api.sendMessage
-import core.game.node.item.Item
 
-class EatBananaAction : CompanionAction<AmiliousMonkey> {
+class EatBananaAction(rank: Int = 30) :
+    SimpleCompanionAction<AmiliousMonkey>("eat", rank) {
 
-    private var eatWait = 0
-
-    override fun name() = "eat"
-
-    override fun cooldown(actor: AmiliousMonkey) {
-        if (eatWait > 0) eatWait--
-    }
+    override fun getPhaseName() = "eat"
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
+        if (!ready()) return false
         if (!actor.eatEnabled()) return false
-        if (eatWait > 0) return false
         if (actor.hunger() >= 30) return false
         return actor.hasBanana()
     }
@@ -31,8 +26,7 @@ class EatBananaAction : CompanionAction<AmiliousMonkey> {
         GigosHudPacket.send(actor.owner, actor)
         sendMessage(actor.owner, "Gigos eats a banana.")
         playAudio(actor.owner, MonkeyConfig.SFX_OOK)
-        eatWait = 5
+        rest(5)
         return false
     }
-
 }

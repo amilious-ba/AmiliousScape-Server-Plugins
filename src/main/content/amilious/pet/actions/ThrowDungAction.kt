@@ -1,5 +1,7 @@
 package content.amilious.pet.actions
 
+
+import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
 import content.amilious.pet.MonkeyConfig
@@ -7,74 +9,60 @@ import core.api.playAudio
 import core.api.sendMessage
 import core.game.node.entity.combat.ImpactHandler
 import core.game.node.entity.impl.Projectile
+import core.game.node.entity.npc.NPC
 import core.game.world.map.RegionManager
 import core.game.world.update.flag.context.Animation
 import core.game.world.update.flag.context.Graphics
 
-class ThrowDungAction : CompanionAction<AmiliousMonkey> {
-    private var dungWait = 0
-    private var phase = 0
-    private var pending: core.game.node.entity.npc.NPC? = null
+class ThrowDungAction(rank: Int = 50) :
+    PhasedCompanionAction<AmiliousMonkey, ThrowDungAction.Phase>(
+        "dung", rank, Phase::class
+    ) {
 
-    override fun name() = "dung"
+    enum class Phase { WIND, CAST, HIT }
 
-    override fun cooldown(actor: AmiliousMonkey) {
-        if (dungWait > 0) dungWait--
-    }
+    private var pending: NPC? = null
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
-        if (dungWait > 0 || !actor.dungEnabled()) return false
+        if (!ready()) return false
+        if (!actor.dungEnabled()) return false
         if (actor.hunger() < MonkeyConfig.HUNGER_THROW) return false
-        return actor.owner.properties.combatPulse.isAttacking
+        if (!actor.owner.properties.combatPulse.isAttacking) return false
+        return target(actor) != null
     }
 
     override fun start(actor: AmiliousMonkey) {
-        phase = 0
-        pending = null
+        super.start(actor)
+        pending = target(actor)
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
+        val victim = pending
+        if (victim == null || !victim.isActive) return false
+        if (victim === actor || victim === actor.owner) return false
+        if (actor.location.getDistance(victim.location) > 8) return false
+
         when (phase) {
-            0 -> {
-                val victim = RegionManager.getLocalNpcs(actor.owner, 8)
-                    .firstOrNull {
-                        it !== actor && it.isActive && !it.isInvisible &&
-                                it.properties.combatPulse.isAttacking
-                    } ?: return false
-                if (victim === actor.owner || victim === actor) return false
-                if (actor.location.getDistance(victim.location) > 8) return false
-                pending = victim
-                dungWait = MonkeyConfig.DUNG_COOLDOWN
+            Phase.WIND -> {
+                rest(MonkeyConfig.DUNG_COOLDOWN)
                 actor.addHunger(-MonkeyConfig.HUNGER_THROW)
                 actor.face(victim)
+                actor.animate(Animation(MonkeyConfig.ANIM_ATTACK))
+                GigosHudPacket.send(actor.owner, actor)
+                nextPhase()
+                return true
+            }
+            Phase.CAST -> {
                 try {
-                    Projectile.create(
-                        actor,
-                        victim,
-                        130,   // gfx
-                        12,    // startHeight — try 12–20
-                        20,    // endHeight on the target
-                        41,    // delay
-                        60,    // speed
-                        5,     // angle
-                        11     // distance offset
-                    ).send()
+                    Projectile.create(actor, victim, 130, 12, 20, 41, 60, 5, 11).send()
                     playAudio(actor.owner, MonkeyConfig.SFX_OOK)
                 } catch (_: Exception) {
                 }
-                GigosHudPacket.send(actor.owner, actor)
-                phase = 1
+                nextPhase()
                 return true
             }
-            1 -> {
-                actor.animate(Animation(MonkeyConfig.ANIM_ATTACK))
-                phase = 2
-                return true
-            }
-            else -> {
-                val victim = pending ?: return false
+            Phase.HIT -> {
                 pending = null
-                if (!victim.isActive) return false
                 victim.graphics(Graphics(30))
                 val hit = 1 + (Math.random() * 3).toInt()
                 victim.impactHandler.manualHit(actor, hit, ImpactHandler.HitsplatType.NORMAL)
@@ -84,4 +72,13 @@ class ThrowDungAction : CompanionAction<AmiliousMonkey> {
             }
         }
     }
+
+    private fun target(actor: AmiliousMonkey): NPC? =
+        RegionManager.getLocalNpcs(actor.owner, 8).firstOrNull {
+            it !== actor &&
+                    it !== actor.owner &&
+                    it.isActive &&
+                    !it.isInvisible &&
+                    it.properties.combatPulse.isAttacking
+        }
 }

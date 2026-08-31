@@ -1,20 +1,59 @@
 package content.amilious.pet
 
-import core.game.node.entity.player.Player
+
 import core.net.packet.IoBuffer
 import core.net.packet.PacketHeader
+import core.game.node.entity.player.Player
 
+
+/**
+ * GigosHudPacket is responsible for constructing and sending game-related packets
+ * to update player states, hide players, or handle AmiliousMonkey configurations.
+ * This object provides functionality to build and transmit the appropriate
+ * IoBuffer packets for client-server communication.
+ */
 object GigosHudPacket {
 
+    //#region Constants ################################################################################################
+
+    /**
+     * Represents the opcode constant used for a specific operation or instruction in the protocol.
+     * Typically utilized for client-server communication to identify and handle particular actions.
+     *
+     * Value: 201
+     */
     const val OPCODE = 201
 
+    //#endregion #######################################################################################################
+
+
+    //#region Public Methods ###########################################################################################
+
+    /**
+     * Sends a packet to hide a player in the session.
+     *
+     * This method constructs a packet with a specific opcode and header, then writes it
+     * to the player's session. The packet is used to indicate that the player should be
+     * hidden in the game world.
+     *
+     * @param player The player that should be hidden. The session associated with this player
+     * is used to send the packet.
+     */
     fun hide(player: Player) {
         val buf = IoBuffer(OPCODE, PacketHeader.BYTE)
         buf.p1(0)
         player.session.write(buf)
     }
 
+    /**
+     * Sends a packet to the player's session, updating the state of an AmiliousMonkey with its configurations
+     * and current attributes.
+     *
+     * @param player The player to whom the packet should be sent.
+     * @param monkey The AmiliousMonkey whose data and configurations will be sent in the packet.
+     */
     fun send(player: Player, monkey: AmiliousMonkey) {
+
         val lootOn = player.getAttribute(MonkeyConfig.ATTR_LOOT, true)
         val dungOn = player.getAttribute(MonkeyConfig.ATTR_DUNG, true)
         val eatOn = player.getAttribute(MonkeyConfig.ATTR_EAT, true)
@@ -22,6 +61,7 @@ object GigosHudPacket {
         val feedOn = player.getAttribute(MonkeyConfig.ATTR_FEED, true)
         val pickOn = player.getAttribute(MonkeyConfig.ATTR_PICK, true)
         val unburdenOn = player.getAttribute(MonkeyConfig.ATTR_UNBURDEN, true)
+
         val buf = IoBuffer(OPCODE, PacketHeader.BYTE)
         buf.p1(1)
         buf.p2(monkey.hunger().coerceIn(0, 65535))
@@ -29,10 +69,10 @@ object GigosHudPacket {
         buf.putString("Gigos")
         buf.p2(monkey.bananaCount().coerceIn(0, 65535))
         buf.putString(monkey.brainActionName())
-        buf.p1(7)
-        buf.p1(2)
-        buf.p1(if (lootOn) 1 else 0)
-        buf.putString("Autoloot")
+        buf.p1(7)                       //the number of toggles need to update when adding
+        buf.p1(2)                       //option index starts at 2
+        buf.p1(if (lootOn) 1 else 0)    //toggle status
+        buf.putString("Autoloot")         //toggle name
         buf.p1(4)
         buf.p1(if (dungOn) 1 else 0)
         buf.putString("Dung")
@@ -53,4 +93,7 @@ object GigosHudPacket {
         buf.putString("Unburden")
         player.session.write(buf)
     }
+
+    //#endregion Public Methods ########################################################################################
+
 }

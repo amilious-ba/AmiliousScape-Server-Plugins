@@ -1,5 +1,6 @@
 package content.amilious.pet.actions
 
+import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
 import content.amilious.pet.MonkeyConfig
@@ -9,28 +10,22 @@ import core.game.interaction.MovementPulse
 import core.game.world.map.Location
 import core.game.world.map.RegionManager
 
-class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
+class PickBananaTreeAction(rank: Int = 40) :
+    PhasedCompanionAction<AmiliousMonkey, PickBananaTreeAction.Phase>(
+        "pick-banana", rank, Phase::class
+    ) {
 
-    private enum class Phase { WALK, PICK, HOLD }
+    enum class Phase { WALK, PICK, HOLD }
 
-    private var phase = Phase.WALK
     private var dest: Location? = null
     private var wait = 0
     private var walkTicks = 0
-    private var cool = 0
-    private var lastOwner = Location.create(0, 0, 0)
-    private var idleTicks = 0
     private var picksOnThis = 0
-    private val rest = HashMap<String, Int>()
-
-    override fun name() = "pick-banana"
+    private val treeCd = HashMap<String, Int>()
 
     override fun cooldown(actor: AmiliousMonkey) {
-        if (cool > 0) cool--
-        val here = actor.owner.location
-        if (here == lastOwner) idleTicks++ else idleTicks = 0
-        lastOwner = here
-        val it = rest.iterator()
+        super.cooldown(actor)
+        val it = treeCd.iterator()
         while (it.hasNext()) {
             val e = it.next()
             e.setValue(e.value - 1)
@@ -39,17 +34,17 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
     }
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
-        if (cool > 0) return false
+        if (!ready()) return false
         if (!actor.pickEnabled()) return false
-        if (idleTicks < IDLE_NEED) return false
+        if (actor.ownerIdleTicks < IDLE_NEED) return false
         if (actor.hunger() < MonkeyConfig.HUNGER_PICK) return false
         if (actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) return false
         return nearestTile(actor) != null
     }
 
     override fun start(actor: AmiliousMonkey) {
+        super.start(actor)
         dest = nearestTile(actor)
-        phase = Phase.WALK
         wait = 0
         walkTicks = 0
         picksOnThis = 0
@@ -57,8 +52,8 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
-        if (idleTicks < 2) {
-            cool = 4
+        if (actor.ownerIdleTicks < 2) {
+            rest(4)
             return false
         }
         val tile = dest ?: return false
@@ -66,7 +61,7 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
             Phase.WALK -> {
                 walkTicks++
                 if (actor.location.getDistance(tile) <= 2.0) {
-                    phase = Phase.PICK
+                    nextPhase()
                     return true
                 }
                 if (walkTicks > 25) return false
@@ -75,18 +70,18 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
             }
             Phase.PICK -> {
                 if (actor.location.getDistance(tile) > 2.0) {
-                    phase = Phase.WALK
+                    setPhase(Phase.WALK)
                     walkTicks = 0
                     walkTo(actor)
                     return true
                 }
                 if (actor.hunger() < MonkeyConfig.HUNGER_PICK) {
-                    cool = 8
+                    rest(8)
                     return false
                 }
                 if (!actor.addBananasNoted(1)) {
                     sendMessage(actor.owner, "Gigos wants a banana but his pack is full.")
-                    cool = 25
+                    rest(25)
                     return false
                 }
                 actor.addHunger(-MonkeyConfig.HUNGER_PICK)
@@ -96,18 +91,18 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
                 sendMessage(actor.owner, "Gigos picks a banana.")
                 picksOnThis++
                 if (picksOnThis >= PICKS_PER_TREE) {
-                    rest[key(tile)] = TREE_REST
-                    cool = 6
+                    treeCd[key(tile)] = TREE_REST
+                    rest(6)
                     return false
                 }
-                phase = Phase.HOLD
+                setPhase(Phase.HOLD)
                 wait = 3
                 return true
             }
             Phase.HOLD -> {
                 wait--
                 if (wait > 0) return true
-                phase = Phase.PICK
+                setPhase(Phase.PICK)
                 return true
             }
         }
@@ -129,7 +124,7 @@ class PickBananaTreeAction : CompanionAction<AmiliousMonkey> {
         for (dx in -RANGE.toInt()..RANGE.toInt()) {
             for (dy in -RANGE.toInt()..RANGE.toInt()) {
                 val loc = Location.create(origin.x + dx, origin.y + dy, z)
-                if (rest.containsKey(key(loc))) continue
+                if (treeCd.containsKey(key(loc))) continue
                 val obj = RegionManager.getObject(z, loc.x, loc.y) ?: continue
                 if (!isTree(obj.id, obj.name)) continue
                 val d = origin.getDistance(obj.location)

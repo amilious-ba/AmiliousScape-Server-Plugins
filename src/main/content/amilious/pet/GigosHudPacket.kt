@@ -75,7 +75,7 @@ object GigosHudPacket {
         buf.p1(if (monkey.brainBusy()) 1 else 0)
         buf.p1(if (monkey.isDrunk()) 1 else 0)
         buf.p2(monkey.drunkTicks().coerceIn(0, 65535))
-        buf.p1(7)
+        buf.p1(8)
         buf.p1(2)
         buf.p1(if (lootOn) 1 else 0)
         buf.putString("Autoloot")

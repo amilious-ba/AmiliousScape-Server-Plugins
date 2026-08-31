@@ -16,6 +16,8 @@ class WanderAction(rank: Int = 10) :
 
     private var dest: Location? = null
 
+    override fun priorityWeight(): Int = 6
+
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (!ready()) return false
         if (actor.ownerIdleTicks < 25) return false

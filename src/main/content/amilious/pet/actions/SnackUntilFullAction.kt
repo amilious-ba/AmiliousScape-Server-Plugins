@@ -10,6 +10,8 @@ import core.api.sendMessage
 class SnackUntilFullAction(rank: Int = 10) :
     SimpleCompanionAction<AmiliousMonkey>("snack", rank) {
 
+    override fun priorityWeight(): Int = 2
+
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (!ready()) return false
         if (!actor.eatEnabled()) return false

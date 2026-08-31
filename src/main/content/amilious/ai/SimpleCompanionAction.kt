@@ -105,6 +105,8 @@ abstract class SimpleCompanionAction<T>(private val actionName: String, private 
         if (cool > 0) cool--
     }
 
+    override fun priorityWeight(): Int = 1
+
     //#endregion #######################################################################################################
 
 

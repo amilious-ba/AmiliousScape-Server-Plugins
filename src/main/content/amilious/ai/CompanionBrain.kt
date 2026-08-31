@@ -250,10 +250,17 @@ class CompanionBrain<T>(private val actor: T) {
     //#endregion #######################################################################################################
 
     private fun pickNext(): ICompanionAction<T>? {
-        val ready = actions.filter { it.canStart(actor) }
-        if (ready.isEmpty()) return null
-        val best = ready.maxOf { it.priority() }
-        return ready.filter { it.priority() == best }.random()
+        val eligible = actions.filter { it.canStart(actor) }
+        if (eligible.isEmpty()) return null
+        val best = eligible.maxOf { it.priority() }
+        val pool = eligible.filter { it.priority() == best }
+        val total = pool.sumOf { it.priorityWeight().coerceAtLeast(1) }
+        var roll = kotlin.random.Random.nextInt(total)
+        for (a in pool) {
+            roll -= a.priorityWeight().coerceAtLeast(1)
+            if (roll < 0) return a
+        }
+        return pool.last()
     }
 
 }

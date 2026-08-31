@@ -15,6 +15,8 @@ class NapAction(rank: Int = 10) :
 
     private var slept = 0
 
+    override fun priorityWeight(): Int = 1
+
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (!ready()) return false
         if (actor.ownerInCombat()) return false

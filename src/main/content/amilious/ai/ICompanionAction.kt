@@ -22,6 +22,8 @@ interface ICompanionAction<T> {
      */
     fun priority(): Int
 
+    fun priorityWeight(): Int
+
     /**
      * Retrieves the total number of phases involved in the companion action.
      *

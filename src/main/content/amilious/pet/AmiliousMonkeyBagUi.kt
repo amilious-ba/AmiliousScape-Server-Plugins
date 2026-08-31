@@ -22,7 +22,7 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             if (live.isBananaItem(invItem) || invItem.id == MonkeyConfig.BANANA_ID) {
                 val want = amountFor(opcode)
                 if (want < 0) {
-                    sendMessage(player, "Store-X not wired yet. Use Store-1/5/10/All.")
+                    askAmount(player, live, player.inventory, live.bag, invItem.id)
                     return@on true
                 }
                 val n = min(want, invItem.amount)

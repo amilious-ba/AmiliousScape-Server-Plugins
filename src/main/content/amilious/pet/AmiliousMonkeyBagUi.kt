@@ -39,7 +39,7 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             }
             val want = amountFor(opcode)
             if (want < 0) {
-                sendMessage(player, "Store-X not wired yet. Use Store-1/5/10/All.")
+                askAmount(player, live, player.inventory, live.bag, invItem.id)
                 return@on true
             }
             val room = live.bag.getMaximumAdd(invItem)
@@ -65,7 +65,7 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             val bagItem = live.bag.get(slot) ?: return@on true
             val want = amountFor(opcode)
             if (want < 0) {
-                sendMessage(player, "Withdraw-X not wired yet. Use Withdraw-1/5/10/All.")
+                askAmount(player, live, live.bag, player.inventory, bagItem.id)
                 return@on true
             }
             val room = player.inventory.getMaximumAdd(bagItem)

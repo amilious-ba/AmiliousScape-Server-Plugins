@@ -1,44 +1,30 @@
 package content.amilious.pet.actions
 
-
-import kotlin.random.Random
-import core.game.world.map.Location
+import content.amilious.ai.PhasedCompanionAction
+import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.MonkeyConfig
 import core.game.interaction.MovementPulse
-import content.amilious.ai.ICompanionAction
-import content.amilious.pet.AmiliousMonkey
+import core.game.world.map.Location
+import kotlin.random.Random
 
+class WanderAction(rank: Int = 10) :
+    PhasedCompanionAction<AmiliousMonkey, WanderAction.Phase>(
+        "wander", rank, Phase::class
+    ) {
 
-class WanderAction(private val rank: Int = 10) : ICompanionAction<AmiliousMonkey> {
+    enum class Phase { WALK, HOLD }
 
-    private enum class Phase { WALK, HOLD }
-
-    private var phase = Phase.WALK
     private var dest: Location? = null
-    private var wait = 0
-
-    override fun name() = "wander"
-
-    override fun priority() = rank
-
-    override fun getNumberPhases() = Phase.entries.size
-
-    override fun getPhase() = phase.ordinal
-
-    override fun getPhaseName() = phase.name
-
-    override fun cooldown(actor: AmiliousMonkey) {
-        if (wait > 0) wait--
-    }
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
-        if (wait > 0) return false
+        if (!ready()) return false
         if (actor.ownerIdleTicks < 25) return false
         if (actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) return false
         return true
     }
 
     override fun start(actor: AmiliousMonkey) {
+        super.start(actor)
         var dx = 0
         var dy = 0
         while (dx == 0 && dy == 0) {
@@ -46,7 +32,6 @@ class WanderAction(private val rank: Int = 10) : ICompanionAction<AmiliousMonkey
             dy = Random.nextInt(-2, 3)
         }
         dest = actor.owner.location.transform(dx, dy, 0)
-        phase = Phase.WALK
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
@@ -58,7 +43,7 @@ class WanderAction(private val rank: Int = 10) : ICompanionAction<AmiliousMonkey
                 actor.pulseManager.run(object : MovementPulse(actor, tile) {
                     override fun pulse(): Boolean = true
                 })
-                phase = Phase.HOLD
+                nextPhase()
                 return true
             }
             Phase.HOLD -> {
@@ -66,7 +51,7 @@ class WanderAction(private val rank: Int = 10) : ICompanionAction<AmiliousMonkey
                     return true
                 }
                 actor.face(actor.owner)
-                wait = Random.nextInt(8, 20)
+                rest(Random.nextInt(8, 20))
                 return false
             }
         }

@@ -11,6 +11,7 @@ import core.game.node.entity.combat.ImpactHandler
 import core.game.node.entity.impl.Projectile
 import core.game.node.entity.npc.NPC
 import core.game.world.map.RegionManager
+import core.game.world.repository.Repository
 import core.game.world.update.flag.context.Animation
 import core.game.world.update.flag.context.Graphics
 
@@ -74,11 +75,12 @@ class ThrowDungAction(rank: Int = 50) :
     }
 
     private fun target(actor: AmiliousMonkey): NPC? =
-        RegionManager.getLocalNpcs(actor.owner, 8).firstOrNull {
+        Repository.npcs.firstOrNull {
             it !== actor &&
                     it !== actor.owner &&
                     it.isActive &&
                     !it.isInvisible &&
+                    it.location.getDistance(actor.owner.location) <= 8 &&
                     it.properties.combatPulse.isAttacking
         }
 }

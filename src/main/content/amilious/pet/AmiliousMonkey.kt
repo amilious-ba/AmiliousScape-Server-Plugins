@@ -88,8 +88,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
             if (old !== this) old.dismiss()
         }
         try {
-            val locals = RegionManager.getLocalNpcs(owner, 64)
-            for (npc in locals) {
+            for (npc in Repository.npcs) {
                 if (npc !== this && npc is AmiliousMonkey && npc.owner == owner) {
                     npc.dismiss()
                 }

@@ -37,6 +37,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
     private var lastOwnerY = Int.MIN_VALUE
     private var lastOwnerHp = -1
     private var lastHudAction = ""
+    private var lastHudPhase = ""
 
     private val brain = CompanionBrain(this)
 
@@ -98,6 +99,7 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         location = owner.location.transform(1, 0, 0)
         init()
         name = "Gigos"
+        definition.name = "Gigos"
         isWalks = true
         interaction.set(Option("Pack", 0))
         interaction.set(Option("Talk-to", 1))
@@ -111,6 +113,17 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         playAudio(owner, MonkeyConfig.SFX_PLAYFUL)
         followOwner()
     }
+
+    fun brainBusy() = brain.busy()
+
+    fun brainStop() = brain.requestStop()
+
+    fun brainDebug() = brain.debugLines()
+
+    fun brainActionName(): String = brain.getCurrentActionName()
+    fun brainPhaseName(): String = brain.getCurrentActionPhaseName()
+    fun brainPhase(): Int = brain.getCurrentPhase()
+    fun brainPhases(): Int = brain.getCurrentActionPhases()
 
     fun takeNonBananasToOwner(): Int {
         var moved = 0
@@ -246,8 +259,10 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         tickCombatIdle()
         brain.tick()
         val name = brain.getCurrentActionName()
-        if (name != lastHudAction) {
+        val phase = brain.getCurrentActionPhaseName()
+        if (name != lastHudAction || phase != lastHudPhase) {
             lastHudAction = name
+            lastHudPhase = phase
             GigosHudPacket.send(owner, this)
         }
     }
@@ -348,6 +363,5 @@ class AmiliousMonkey(val owner: Player) : NPC(MonkeyConfig.NPC_ID) {
         return n
     }
 
-    fun brainActionName(): String = brain.getCurrentActionName()
 
 }

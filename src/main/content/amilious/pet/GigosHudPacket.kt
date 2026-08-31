@@ -53,7 +53,6 @@ object GigosHudPacket {
      * @param monkey The AmiliousMonkey whose data and configurations will be sent in the packet.
      */
     fun send(player: Player, monkey: AmiliousMonkey) {
-
         val lootOn = player.getAttribute(MonkeyConfig.ATTR_LOOT, true)
         val dungOn = player.getAttribute(MonkeyConfig.ATTR_DUNG, true)
         val eatOn = player.getAttribute(MonkeyConfig.ATTR_EAT, true)
@@ -63,16 +62,22 @@ object GigosHudPacket {
         val unburdenOn = player.getAttribute(MonkeyConfig.ATTR_UNBURDEN, true)
 
         val buf = IoBuffer(OPCODE, PacketHeader.BYTE)
-        buf.p1(1)
+        buf.p1(2)
         buf.p2(monkey.hunger().coerceIn(0, 65535))
         buf.p2(MonkeyConfig.HUNGER_MAX)
         buf.putString("Gigos")
         buf.p2(monkey.bananaCount().coerceIn(0, 65535))
         buf.putString(monkey.brainActionName())
-        buf.p1(7)                       //the number of toggles need to update when adding
-        buf.p1(2)                       //option index starts at 2
-        buf.p1(if (lootOn) 1 else 0)    //toggle status
-        buf.putString("Autoloot")         //toggle name
+        buf.putString(monkey.brainPhaseName())
+        buf.p1(monkey.brainPhase().coerceIn(0, 255))
+        buf.p1(monkey.brainPhases().coerceIn(0, 255))
+        buf.p1(if (monkey.brainBusy()) 1 else 0)
+        buf.p1(if (monkey.isDrunk()) 1 else 0)
+        buf.p2(monkey.drunkTicks().coerceIn(0, 65535))
+        buf.p1(7)
+        buf.p1(2)
+        buf.p1(if (lootOn) 1 else 0)
+        buf.putString("Autoloot")
         buf.p1(4)
         buf.p1(if (dungOn) 1 else 0)
         buf.putString("Dung")

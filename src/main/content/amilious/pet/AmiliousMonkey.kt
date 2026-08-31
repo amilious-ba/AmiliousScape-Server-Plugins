@@ -7,6 +7,7 @@ import content.amilious.pet.actions.EatBananaAction
 import content.amilious.pet.actions.FeedOwnerAction
 import content.amilious.pet.actions.FollowIdleAction
 import content.amilious.pet.actions.FollowIfFarAction
+import content.amilious.pet.actions.GraveLootAction
 import content.amilious.pet.actions.LootAction
 import content.amilious.pet.actions.NapAction
 import content.amilious.pet.actions.PickBananaTreeAction
@@ -45,6 +46,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
 
     init {
         brain
+            .addAction(GraveLootAction())
             .addAction(FollowIfFarAction())
             .addAction(FeedOwnerAction())
             .addAction(UnburdenAction())

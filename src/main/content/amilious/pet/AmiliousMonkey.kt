@@ -8,7 +8,9 @@ import content.amilious.pet.actions.FeedOwnerAction
 import content.amilious.pet.actions.FollowIdleAction
 import content.amilious.pet.actions.FollowIfFarAction
 import content.amilious.pet.actions.LootAction
+import content.amilious.pet.actions.NapAction
 import content.amilious.pet.actions.PickBananaTreeAction
+import content.amilious.pet.actions.SnackUntilFullAction
 import content.amilious.pet.actions.ThrowDungAction
 import content.amilious.pet.actions.UnburdenAction
 import content.amilious.pet.actions.WanderAction
@@ -52,6 +54,8 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
             .addAction(LootAction())
             .addAction(ThrowDungAction())
             .addAction(WanderAction())
+            .addAction(NapAction())
+            .addAction(SnackUntilFullAction())
             .addAction(FollowIdleAction())
     }
 

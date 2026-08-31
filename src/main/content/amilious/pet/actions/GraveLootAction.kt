@@ -21,6 +21,7 @@ class GraveLootAction(rank: Int = 110) :
     private var walkTicks = 0
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
+        if (!actor.graveEnabled()) return false
         if (!ready()) return false
         val grave = GraveController.activeGraves[actor.owner.details.uid] ?: return false
         return grave.getItems().any { !it.isRemoved }

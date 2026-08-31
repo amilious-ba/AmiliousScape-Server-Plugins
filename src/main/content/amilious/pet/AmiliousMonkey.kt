@@ -66,6 +66,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         if (id != want) transform(want)
     }
 
+    fun graveEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_GRAVE, true)
     fun dungEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_DUNG, true)
     fun eatEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_EAT, true)
     fun b2bEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_B2B, true)

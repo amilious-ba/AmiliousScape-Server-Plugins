@@ -145,6 +145,13 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
                     GigosHudPacket.send(player, live)
                     notify(player, if (!on) "Gigos is dark." else "Gigos is light.")
                 }
+                11 -> {
+                    if (live == null) reject(player, "Gigos is not out.")
+                    val on = player.getAttribute(MonkeyConfig.ATTR_GRAVE, true)
+                    setAttribute(player, MonkeyConfig.ATTR_GRAVE, !on)
+                    GigosHudPacket.send(player, live!!)
+                    notify(player, if (!on) "Gigos will loot your grave." else "Gigos will leave your grave.")
+                }
                 else -> reject(player, "Unknown monkey action.")
             }
         }

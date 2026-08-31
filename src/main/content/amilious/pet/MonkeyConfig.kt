@@ -56,6 +56,7 @@ object MonkeyConfig {
     const val ATTR_PICK = "/save:amilious_monkey_pick"
     const val ATTR_UNBURDEN = "/save:amilious_monkey_unburden"
     const val ATTR_DARK = "/save:amilious_gigos_dark"
+    const val ATTR_GRAVE = "/save:amilious_grave"
 
     fun npcId(player: Player): Int =
         if (player.getAttribute(ATTR_DARK, true)) NPC_DARK else NPC_LIGHT

@@ -44,7 +44,7 @@ class NapAction(rank: Int = 10) :
             Phase.SLEEP -> {
                 slept++
                 if (slept % 8 == 0) {
-                    actor.graphics(Graphics(277, -10))
+                    actor.graphics(Graphics(349, 0))
                 }
                 if (slept >= 40) {
                     stand(actor)

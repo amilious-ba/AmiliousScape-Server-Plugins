@@ -9,6 +9,7 @@ import core.api.sendMessage
 import core.game.interaction.MovementPulse
 import core.game.world.map.Location
 import core.game.world.map.RegionManager
+import kotlin.math.abs
 
 class PickBananaTreeAction(rank: Int = 40) :
     PhasedCompanionAction<AmiliousMonkey, PickBananaTreeAction.Phase>(
@@ -59,23 +60,35 @@ class PickBananaTreeAction(rank: Int = 40) :
             rest(4)
             return false
         }
-        val stand = dest ?: return false
+        val stand = dest
         val target = tree ?: return false
         when (phase) {
             Phase.WALK -> {
                 walkTicks++
-                if (sameTile(actor.location, stand)) {
+                if (atTree(actor, target)) {
                     goToPhase(Phase.PICK)
                     return true
                 }
-                if (walkTicks > 30) return false
-                if (!actor.pulseManager.hasPulseRunning()) walkTo(actor)
+                val moving = actor.pulseManager.hasPulseRunning() || actor.walkingQueue.isMoving
+                if (!moving && walkTicks > 4) {
+                    val next = otherStand(actor, target, stand)
+                    if (next == null || walkTicks > 20) {
+                        treeCd[key(target)] = TREE_REST
+                        rest(6)
+                        return false
+                    }
+                    dest = next
+                    walkTo(actor)
+                    return true
+                }
+                if (!moving) walkTo(actor)
                 return true
             }
             Phase.PICK -> {
-                if (!sameTile(actor.location, stand)) {
+                if (!atTree(actor, target)) {
                     goToPhase(Phase.WALK)
                     walkTicks = 0
+                    dest = standTile(actor, target)
                     walkTo(actor)
                     return true
                 }
@@ -112,12 +125,31 @@ class PickBananaTreeAction(rank: Int = 40) :
         }
     }
 
+    private fun atTree(actor: AmiliousMonkey, tree: Location): Boolean {
+        val dx = abs(actor.location.x - tree.x)
+        val dy = abs(actor.location.y - tree.y)
+        return actor.location.z == tree.z && dx <= 1 && dy <= 1 && (dx + dy) > 0
+    }
+
     private fun walkTo(actor: AmiliousMonkey) {
-        val tile = dest ?: return
+        val tile = dest ?: tree ?: return
         actor.pulseManager.clear()
+        actor.walkingQueue.reset()
         actor.pulseManager.run(object : MovementPulse(actor, tile) {
             override fun pulse(): Boolean = true
         })
+    }
+
+    private fun otherStand(actor: AmiliousMonkey, tree: Location, used: Location?): Location? {
+        val spots = arrayOf(
+            tree.transform(1, 0, 0),
+            tree.transform(-1, 0, 0),
+            tree.transform(0, 1, 0),
+            tree.transform(0, -1, 0)
+        )
+        return spots
+            .filter { used == null || !sameTile(it, used) }
+            .minByOrNull { actor.location.getDistance(it) }
     }
 
     private fun standTile(actor: AmiliousMonkey, tree: Location?): Location? {

@@ -19,40 +19,22 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
                 ?: return@on true
             val invItem = player.inventory.get(slot) ?: return@on true
-            if (live.isBananaItem(invItem) || invItem.id == MonkeyConfig.BANANA_ID) {
-                val want = amountFor(opcode)
-                if (want < 0) {
-                    askAmount(player, live, player.inventory, live.bag, invItem.id)
-                    return@on true
-                }
-                val n = min(want, invItem.amount)
-                if (!player.inventory.remove(Item(invItem.id, n))) return@on true
-                if (live.addBananasNoted(n)) {
-                    live.saveBag()
-                    live.openBagUi()
-                    sendMessage(player, "Gigos notes the bananas.")
-                } else {
-                    player.inventory.add(Item(invItem.id, n))
-                    sendMessage(player, "Gigos cannot carry any more.")
-                }
-                return@on true
-            }
             val want = amountFor(opcode)
             if (want < 0) {
                 askAmount(player, live, player.inventory, live.bag, invItem.id)
                 return@on true
             }
-            val room = live.bag.getMaximumAdd(invItem)
-            if (room <= 0) {
-                sendMessage(player, "Gigos cannot carry any more.")
-                return@on true
+            val moved = if (live.isBananaItem(invItem) || invItem.id == MonkeyConfig.BANANA_ID) {
+                depositBananas(player, live, want)
+            } else {
+                transfer(player, live, player.inventory, live.bag, invItem.id, want)
             }
-            val move = Item(invItem.id, min(want, min(invItem.amount, room)))
-            if (player.inventory.remove(move) && live.bag.add(move)) {
+            if (moved == 0) sendMessage(player, "Gigos cannot carry any more.")
+            else {
                 live.saveBag()
                 live.openBagUi()
-                if (move.amount < invItem.amount && want == Int.MAX_VALUE) {
-                    sendMessage(player, "Gigos took what he could carry.")
+                if (live.isBananaItem(invItem) || invItem.id == MonkeyConfig.BANANA_ID) {
+                    sendMessage(player, "Gigos notes the bananas.")
                 }
             }
             true
@@ -94,6 +76,24 @@ class AmiliousMonkeyBagUi : InterfaceListener {
             else sendMessage(player, "You take items from Gigos' pack.")
             true
         }
+    }
+
+    private fun depositBananas(player: Player, live: AmiliousMonkey, want: Int): Int {
+        val fresh = MonkeyConfig.BANANA_ID
+        val noted = noteId()
+        val have = player.inventory.getAmount(fresh) + player.inventory.getAmount(noted)
+        if (have <= 0 || want <= 0) return 0
+        val n = min(want, have)
+        var left = n
+        val takeNoted = min(left, player.inventory.getAmount(noted))
+        if (takeNoted > 0 && player.inventory.remove(Item(noted, takeNoted))) left -= takeNoted
+        val takeFresh = min(left, player.inventory.getAmount(fresh))
+        if (takeFresh > 0 && player.inventory.remove(Item(fresh, takeFresh))) left -= takeFresh
+        val got = n - left
+        if (got <= 0) return 0
+        if (live.addBananasNoted(got)) return got
+        player.inventory.add(Item(noted, got))
+        return 0
     }
 
     private fun depositGigos(player: Player): Boolean {

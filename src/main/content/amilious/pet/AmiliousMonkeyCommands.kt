@@ -139,8 +139,9 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
                 }
                 10 -> {
                     if (live == null) reject(player, "Gigos is not out.")
+                    live!!.brainStop()
                     val skin = MonkeyConfig.nextSkin(player)
-                    live!!.applyModel()
+                    live.applyModel()
                     GigosHudPacket.send(player, live)
                     notify(player, "Gigos is now ${skin.name} (${skin.id}).")
                 }

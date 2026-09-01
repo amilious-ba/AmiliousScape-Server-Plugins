@@ -17,6 +17,7 @@ class PickBananaTreeAction(rank: Int = 40) :
 
     enum class Phase { WALK, PICK, HOLD }
 
+    private var tree: Location? = null
     private var dest: Location? = null
     private var wait = 0
     private var walkTicks = 0
@@ -39,12 +40,13 @@ class PickBananaTreeAction(rank: Int = 40) :
         if (actor.ownerIdleTicks < IDLE_NEED) return false
         if (actor.hunger() < MonkeyConfig.HUNGER_PICK) return false
         if (actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) return false
-        return nearestTile(actor) != null
+        return nearestTree(actor) != null
     }
 
     override fun start(actor: AmiliousMonkey) {
         super.start(actor)
-        dest = standTile(actor, nearestTile(actor))
+        tree = nearestTree(actor)
+        dest = standTile(actor, tree)
         wait = 0
         walkTicks = 0
         picksOnThis = 0
@@ -57,20 +59,21 @@ class PickBananaTreeAction(rank: Int = 40) :
             rest(4)
             return false
         }
-        val tile = dest ?: return false
+        val stand = dest ?: return false
+        val target = tree ?: return false
         when (phase) {
             Phase.WALK -> {
                 walkTicks++
-                if (actor.location.getDistance(tile) <= 1.2) {
+                if (sameTile(actor.location, stand)) {
                     goToPhase(Phase.PICK)
                     return true
                 }
-                if (walkTicks > 25) return false
+                if (walkTicks > 30) return false
                 if (!actor.pulseManager.hasPulseRunning()) walkTo(actor)
                 return true
             }
             Phase.PICK -> {
-                if (actor.location.getDistance(tile) > 1.2) {
+                if (!sameTile(actor.location, stand)) {
                     goToPhase(Phase.WALK)
                     walkTicks = 0
                     walkTo(actor)
@@ -92,7 +95,7 @@ class PickBananaTreeAction(rank: Int = 40) :
                 sendMessage(actor.owner, "Gigos picks a banana.")
                 picksOnThis++
                 if (picksOnThis >= PICKS_PER_TREE) {
-                    treeCd[key(tile)] = TREE_REST
+                    treeCd[key(target)] = TREE_REST
                     rest(6)
                     return false
                 }
@@ -119,16 +122,16 @@ class PickBananaTreeAction(rank: Int = 40) :
 
     private fun standTile(actor: AmiliousMonkey, tree: Location?): Location? {
         if (tree == null) return null
-        val spots = listOf(
+        val spots = arrayOf(
             tree.transform(1, 0, 0),
             tree.transform(-1, 0, 0),
             tree.transform(0, 1, 0),
             tree.transform(0, -1, 0)
         )
-        return spots.minByOrNull { actor.location.getDistance(it) } ?: tree
+        return spots.minByOrNull { actor.location.getDistance(it) }
     }
 
-    private fun nearestTile(actor: AmiliousMonkey): Location? {
+    private fun nearestTree(actor: AmiliousMonkey): Location? {
         val origin = actor.owner.location
         val z = origin.z
         var best: Location? = null
@@ -154,6 +157,9 @@ class PickBananaTreeAction(rank: Int = 40) :
         if (id in PICKABLE) return true
         return name.lowercase().contains("banana")
     }
+
+    private fun sameTile(a: Location, b: Location): Boolean =
+        a.x == b.x && a.y == b.y && a.z == b.z
 
     private fun key(loc: Location) = "${loc.x},${loc.y},${loc.z}"
 

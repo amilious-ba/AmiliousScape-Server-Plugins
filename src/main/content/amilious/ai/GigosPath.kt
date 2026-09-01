@@ -4,6 +4,7 @@ import core.game.global.action.DoorActionHandler
 import core.game.node.entity.npc.NPC
 import core.game.node.scenery.Scenery
 import core.game.world.map.Location
+import core.game.world.map.Point
 import core.game.world.map.RegionManager
 import core.game.world.map.path.Path
 import core.game.world.map.path.Pathfinder
@@ -19,49 +20,44 @@ object GigosPath {
     fun arrived(actor: NPC, dest: Location, dist: Double = 1.5): Boolean =
         actor.location.getDistance(dest) <= dist
 
+    /** Only clear the walk queue. Do not clear pulses — that kills the companion action. */
     fun stop(actor: NPC) {
-        actor.pulseManager.clear()
         actor.walkingQueue.reset()
     }
 
     fun route(actor: NPC, dest: Location): Route? {
-        val path = smart(actor, dest)
+        val path = Pathfinder.find(actor, dest, true, Pathfinder.SMART)
         val last = lastPoint(path) ?: return null
         return Route(path, Location.create(last.x, last.y, actor.location.z))
     }
 
-    /** True when SMART ends on the dest tile (open path), same as a minimap click that does not snap. */
     fun canReachExact(actor: NPC, dest: Location): Boolean {
         val r = route(actor, dest) ?: return false
-        return r.exact(dest)
+        return r.path.isSuccessful && r.exact(dest)
     }
 
     fun canReach(actor: NPC, dest: Location): Boolean {
         if (canReachExact(actor, dest)) return true
+        val path = Pathfinder.find(actor, dest, true, Pathfinder.SMART)
+        if (path.isSuccessful || path.isMoveNear) return true
         return findClosedGate(actor, dest) != null
     }
 
-    /**
-     * Walk like a minimap click.
-     * Exact end → walk there.
-     * Snapped end → walk to / open a closed gate, then the next walk will be exact.
-     */
     fun walk(actor: NPC, dest: Location, dist: Double = 1.5): Boolean {
-        val r = route(actor, dest) ?: return false
-
-        if (r.exact(dest)) {
+        val path = Pathfinder.find(actor, dest, true, Pathfinder.SMART)
+        if (path.isSuccessful || path.isMoveNear) {
             stop(actor)
-            r.path.walk(actor)
+            path.walk(actor)
             return true
         }
-
         val gate = findClosedGate(actor, dest) ?: return false
         if (arrived(actor, gate.location, 1.5)) {
             return openGate(actor, gate)
         }
-        val toGate = route(actor, gate.location) ?: return false
+        val toGate = Pathfinder.find(actor, gate.location, true, Pathfinder.SMART)
+        if (!toGate.isSuccessful && !toGate.isMoveNear) return false
         stop(actor)
-        toGate.path.walk(actor)
+        toGate.walk(actor)
         return true
     }
 
@@ -89,16 +85,13 @@ object GigosPath {
         return best
     }
 
-    private fun smart(actor: NPC, dest: Location) =
-        Pathfinder.find(actor, dest, true, Pathfinder.SMART)
-
-    private fun lastPoint(path: Path): core.game.world.map.Point? {
+    private fun lastPoint(path: Path): Point? {
         val pts = path.points ?: return null
         if (pts.isEmpty()) return null
         return try {
             pts.last()
         } catch (_: Exception) {
-            var last: core.game.world.map.Point? = null
+            var last: Point? = null
             for (p in pts) last = p
             last
         }

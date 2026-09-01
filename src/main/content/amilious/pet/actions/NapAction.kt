@@ -69,23 +69,21 @@ class NapAction(rank: Int = 10) :
     }
 
     private fun stand(actor: AmiliousMonkey) {
+        val skin = MonkeyConfig.skinFor(actor.owner)
         actor.graphics(Graphics(-1))
         actor.walkingQueue.reset()
         actor.pulseManager.clear()
-        try {
-            actor.animator.animate(null)
-        } catch (_: Exception) {
-        }
-        val skin = MonkeyConfig.skinFor(actor.owner)
+
         val standId = when {
             skin.wake > 0 -> skin.wake
             skin.stand > 0 -> skin.stand
-            else -> actor.definition?.standAnimation ?: MonkeyConfig.skinFor(actor.owner).stand
+            else -> actor.definition?.standAnimation ?: skin.stand
         }
+
+        actor.animator.forceAnimation(Animation(-1))
         if (standId > 0) {
-            actor.animate(Animation(standId))
-        } else {
-            actor.animate(Animation(-1))
+            actor.animator.forceAnimation(Animation(standId))
         }
     }
+
 }

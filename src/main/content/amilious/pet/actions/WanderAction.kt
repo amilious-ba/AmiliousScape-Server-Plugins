@@ -39,20 +39,31 @@ class WanderAction(rank: Int = 10) :
     override fun tick(actor: AmiliousMonkey): Boolean {
         if (actor.ownerIdleTicks < 2) return false
         val tile = dest ?: return false
+
         when (phase) {
             Phase.WALK -> {
-                actor.pulseManager.clear()
-                actor.pulseManager.run(object : MovementPulse(actor, tile) {
-                    override fun pulse(): Boolean = true
-                })
-                nextPhase()
+                if (!actor.pulseManager.hasPulseRunning()) {
+                    actor.pulseManager.clear()
+                    actor.pulseManager.run(object : MovementPulse(actor, tile) {
+                        override fun pulse(): Boolean {
+                            return actor.location.getDistance(tile) <= 1.2
+                        }
+                    })
+                }
+                if (actor.location.getDistance(tile) <= 1.2) {
+                    nextPhase()
+                }
                 return true
             }
             Phase.HOLD -> {
-                if (actor.location.getDistance(tile) > 1.2 && actor.pulseManager.hasPulseRunning()) {
+                actor.face(actor.owner)
+                if (!holding() && ready()) {
+                    // first time in HOLD — stand still this many ticks
+                    holdFor(Random.nextInt(8, 20))
+                }
+                if (holding()) {
                     return true
                 }
-                actor.face(actor.owner)
                 rest(Random.nextInt(8, 20))
                 return false
             }

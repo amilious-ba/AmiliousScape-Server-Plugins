@@ -73,6 +73,7 @@ abstract class PhasedCompanionAction<T, P : Enum<P>>(actionName: String, rank: I
      * @param actor the actor associated with the action being started
      */
     override fun start(actor: T) {
+        super.start(actor)
         phase = all.first()
     }
 

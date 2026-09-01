@@ -31,6 +31,8 @@ abstract class SimpleCompanionAction<T>(private val actionName: String, private 
      */
     protected var cool = 0
 
+    protected var hold = 0
+
     //#endregion #######################################################################################################
 
 
@@ -46,6 +48,10 @@ abstract class SimpleCompanionAction<T>(private val actionName: String, private 
      * @return The action name as a string.
      */
     override fun name() = actionName
+
+    override fun start(actor: T) {
+        hold = 0
+    }
 
     /**
      * Retrieves the priority of this action.
@@ -111,6 +117,18 @@ abstract class SimpleCompanionAction<T>(private val actionName: String, private 
 
 
     //#region Protected Methods ########################################################################################
+
+    protected fun holdFor(ticks: Int) {
+        hold = ticks
+    }
+
+    protected fun holding(): Boolean {
+        if (hold > 0) {
+            hold--
+            return hold > 0
+        }
+        return false
+    }
 
     /**
      * Sets the cooldown for the action.

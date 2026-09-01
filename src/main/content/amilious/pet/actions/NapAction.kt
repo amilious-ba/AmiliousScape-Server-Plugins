@@ -11,9 +11,10 @@ class NapAction(rank: Int = 10) :
         "nap", rank, Phase::class
     ) {
 
-    enum class Phase { LIE, SLEEP }
+    enum class Phase { LIE, SLEEP, WAKE }
 
     private var slept = 0
+    private var wakeTicks = 0
 
     override fun priorityWeight(): Int = 1
 
@@ -37,9 +38,10 @@ class NapAction(rank: Int = 10) :
 
     override fun tick(actor: AmiliousMonkey): Boolean {
         if (actor.ownerIdleTicks < 2 || actor.ownerInCombat()) {
-            stand(actor)
-            rest(8)
-            return false
+            if (phase != Phase.WAKE) {
+                beginWake(actor)
+                return true
+            }
         }
         when (phase) {
             Phase.LIE -> {
@@ -52,11 +54,17 @@ class NapAction(rank: Int = 10) :
                     actor.graphics(Graphics(349, 0))
                 }
                 if (slept >= 40) {
-                    stand(actor)
-                    rest(20)
-                    return false
+                    beginWake(actor)
+                    return true
                 }
                 return true
+            }
+            Phase.WAKE -> {
+                wakeTicks++
+                if (wakeTicks < 4) return true
+                finishStand(actor)
+                rest(20)
+                return false
             }
         }
     }
@@ -71,6 +79,27 @@ class NapAction(rank: Int = 10) :
         actor.graphics(Graphics(-1))
         actor.refreshPose()
         val standId = actor.definition?.standAnimation ?: MonkeyConfig.skinFor(actor.owner).stand
+        if (standId > 0) {
+            actor.animator.forceAnimation(Animation(standId))
+        }
+    }
+
+    private fun beginWake(actor: AmiliousMonkey) {
+        val skin = MonkeyConfig.skinFor(actor.owner)
+        actor.graphics(Graphics(-1))
+        if (skin.sleep > 0 && skin.wake > 0) {
+            actor.animator.forceAnimation(Animation(skin.wake))
+            wakeTicks = 0
+            phase = Phase.WAKE
+            return
+        }
+        finishStand(actor)
+    }
+
+    private fun finishStand(actor: AmiliousMonkey) {
+        actor.refreshPose()
+        val standId = actor.definition?.standAnimation
+            ?: MonkeyConfig.skinFor(actor.owner).stand
         if (standId > 0) {
             actor.animator.forceAnimation(Animation(standId))
         }

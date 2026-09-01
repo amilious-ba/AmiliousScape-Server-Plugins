@@ -1,13 +1,12 @@
 package content.amilious.pet.actions
 
-
+import content.amilious.ai.GigosPath
 import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
 import content.amilious.pet.MonkeyConfig
 import core.api.playAudio
 import core.api.sendMessage
-import core.game.interaction.MovementPulse
 import core.game.node.item.GroundItem
 import core.game.node.item.GroundItemManager
 import core.game.node.item.Item
@@ -47,7 +46,10 @@ class LootAction(rank: Int = 60) :
         tile = nearest(actor)?.location
         wait = 0
         walkTicks = 0
-        walkTo(actor)
+        val dest = tile ?: return
+        if (!GigosPath.walk(actor, dest)) {
+            rest(8)
+        }
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
@@ -55,12 +57,20 @@ class LootAction(rank: Int = 60) :
         when (phase) {
             Phase.WALK -> {
                 walkTicks++
-                if (actor.location.getDistance(dest) <= 1.5) {
+                if (GigosPath.arrived(actor, dest)) {
                     nextPhase()
                     return true
                 }
-                if (walkTicks > 25) return false
-                if (!actor.pulseManager.hasPulseRunning()) walkTo(actor)
+                if (GigosPath.stuck(walkTicks) || !GigosPath.canReach(actor, dest)) {
+                    rest(12)
+                    return false
+                }
+                if (!actor.walkingQueue.isMoving) {
+                    if (!GigosPath.walk(actor, dest)) {
+                        rest(12)
+                        return false
+                    }
+                }
                 return true
             }
             Phase.SCOOP -> {
@@ -74,16 +84,6 @@ class LootAction(rank: Int = 60) :
                 return wait > 0
             }
         }
-    }
-
-    private fun walkTo(actor: AmiliousMonkey) {
-        val dest = tile ?: return
-        actor.pulseManager.clear()
-        actor.walkingQueue.reset()
-        actor.pulseManager.run(object : MovementPulse(actor, dest) {
-            override fun pulse(): Boolean =
-                actor.location.getDistance(dest) <= 1.5
-        })
     }
 
     private fun hasNearby(actor: AmiliousMonkey): Boolean =
@@ -101,6 +101,7 @@ class LootAction(rank: Int = 60) :
                 val itm = Item(it.id, it.amount)
                 actor.isBananaItem(itm) || actor.bag.hasSpaceFor(itm)
             }
+            .filter { GigosPath.canReach(actor, it.location) }
             .minByOrNull { it.location.getDistance(actor.location) }
 
     private fun scoop(m: AmiliousMonkey, dest: Location) {

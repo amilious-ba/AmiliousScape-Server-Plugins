@@ -16,7 +16,7 @@ class PickBananaTreeAction(rank: Int = 40) :
         "pick-banana", rank, Phase::class
     ) {
 
-    enum class Phase { WALK, PICK, HOLD }
+    enum class Phase { WALK, FACE, PICK, HOLD }
 
     private var tree: Location? = null
     private var dest: Location? = null
@@ -65,17 +65,19 @@ class PickBananaTreeAction(rank: Int = 40) :
             rest(4)
             return false
         }
-        val stand = dest
         val target = tree ?: return abort(actor, 6)
         when (phase) {
             Phase.WALK -> {
                 walkTicks++
-                if (atTree(actor, target)) {
-                    goToPhase(Phase.PICK)
+                val stand = dest
+                if (atTree(actor, target) && (stand == null || GigosPath.arrived(actor, stand, 1.0))) {
+                    GigosPath.stop(actor)
+                    faceTree(actor, target)
+                    wait = 2
+                    goToPhase(Phase.FACE)
                     return true
                 }
-                val stand = dest
-                if (stand != null && GigosPath.arrived(actor, stand, 0.6)) {
+                if (stand != null && GigosPath.arrived(actor, stand, 0.6) && !atTree(actor, target)) {
                     val next = otherStand(actor, target, stand)
                     if (next == null) {
                         treeCd[key(target)] = TREE_REST
@@ -118,6 +120,13 @@ class PickBananaTreeAction(rank: Int = 40) :
                 }
                 return true
             }
+            Phase.FACE -> {
+                faceTree(actor, target)
+                wait--
+                if (wait > 0) return true
+                goToPhase(Phase.PICK)
+                return true
+            }
             Phase.PICK -> {
                 if (!atTree(actor, target)) {
                     goToPhase(Phase.WALK)
@@ -126,6 +135,7 @@ class PickBananaTreeAction(rank: Int = 40) :
                     dest?.let { GigosPath.walk(actor, it) }
                     return true
                 }
+                faceTree(actor, target)
                 if (actor.hunger() < MonkeyConfig.HUNGER_PICK) {
                     return abort(actor, 8)
                 }
@@ -148,6 +158,7 @@ class PickBananaTreeAction(rank: Int = 40) :
                 return true
             }
             Phase.HOLD -> {
+                faceTree(actor, target)
                 wait--
                 if (wait > 0) return true
                 goToPhase(Phase.PICK)
@@ -160,6 +171,10 @@ class PickBananaTreeAction(rank: Int = 40) :
         GigosPath.stop(actor)
         rest(restTicks)
         return false
+    }
+
+    private fun faceTree(actor: AmiliousMonkey, tree: Location) {
+        actor.faceLocation(tree)
     }
 
     private fun atTree(actor: AmiliousMonkey, tree: Location): Boolean {

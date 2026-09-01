@@ -61,6 +61,8 @@ class NapAction(rank: Int = 10) :
     }
 
     private fun stand(actor: AmiliousMonkey) {
+        actor.graphics(Graphics(-1))
+        actor.walkingQueue.reset()
         actor.pulseManager.clear()
         try {
             actor.animator.animate(null)

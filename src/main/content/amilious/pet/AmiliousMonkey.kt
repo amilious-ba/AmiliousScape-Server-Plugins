@@ -122,7 +122,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         location = owner.location.transform(1, 0, 0)
         init()
         applyModel()
-        isWalks = true
+        isWalks = false
         interaction.set(Option("Pack", 0))
         interaction.set(Option("Talk-to", 1))
         interaction.set(Option("Pet", 2))
@@ -330,6 +330,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     }
 
     fun followOwner() {
+        if (brain.busy() && brain.getCurrentActionName() != "follow") return
         if (pulseManager.hasPulseRunning()) return
         pulseManager.run(object : MovementPulse(this, owner) {
             override fun pulse(): Boolean = false

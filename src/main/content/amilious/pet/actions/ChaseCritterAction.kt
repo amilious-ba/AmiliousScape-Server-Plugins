@@ -6,7 +6,7 @@ import content.amilious.pet.MonkeyConfig
 import core.api.playAudio
 import core.game.interaction.MovementPulse
 import core.game.node.entity.npc.NPC
-import core.game.world.map.RegionManager
+import core.game.world.repository.Repository
 import core.game.world.update.flag.context.Animation
 import kotlin.random.Random
 
@@ -44,7 +44,7 @@ class ChaseCritterAction(rank: Int = 10) :
             return abort(actor, 8)
         }
         val t = prey
-        if (t == null || !t.isActive || t.isInvisible) {
+        if (t == null || !t.isActive) {
             return abort(actor, 10)
         }
         if (actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) {
@@ -101,17 +101,16 @@ class ChaseCritterAction(rank: Int = 10) :
         })
     }
 
-    private fun findPrey(actor: AmiliousMonkey): NPC? {
-        val local = RegionManager.getLocalNpcs(actor, 8)
-        return local
+    private fun findPrey(actor: AmiliousMonkey): NPC? =
+        Repository.npcs
             .filter { isPrey(actor, it) }
             .minByOrNull { actor.location.getDistance(it.location) }
-    }
 
     private fun isPrey(actor: AmiliousMonkey, npc: NPC): Boolean {
-        if (npc === actor || npc === actor.owner) return false
+        if (npc === actor) return false
         if (npc is AmiliousMonkey) return false
-        if (!npc.isActive || npc.isInvisible) return false
+        if (!npc.isActive) return false
+        if (actor.location.getDistance(npc.location) > 8.0) return false
         if (npc.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) return false
         val n = npc.name.lowercase()
         if (n.contains("familiar") || n.contains("pet")) return false

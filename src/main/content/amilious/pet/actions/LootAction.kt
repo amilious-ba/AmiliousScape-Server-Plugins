@@ -79,8 +79,10 @@ class LootAction(rank: Int = 60) :
     private fun walkTo(actor: AmiliousMonkey) {
         val dest = tile ?: return
         actor.pulseManager.clear()
+        actor.walkingQueue.reset()
         actor.pulseManager.run(object : MovementPulse(actor, dest) {
-            override fun pulse(): Boolean = true
+            override fun pulse(): Boolean =
+                actor.location.getDistance(dest) <= 1.5
         })
     }
 

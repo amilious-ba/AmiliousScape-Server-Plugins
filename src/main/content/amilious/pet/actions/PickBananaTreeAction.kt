@@ -135,8 +135,11 @@ class PickBananaTreeAction(rank: Int = 40) :
         val tile = dest ?: tree ?: return
         actor.pulseManager.clear()
         actor.walkingQueue.reset()
+        val target = tree
         actor.pulseManager.run(object : MovementPulse(actor, tile) {
-            override fun pulse(): Boolean = true
+            override fun pulse(): Boolean =
+                if (target != null) atTree(actor, target)
+                else actor.location.getDistance(tile) <= 1.5
         })
     }
 
@@ -149,6 +152,7 @@ class PickBananaTreeAction(rank: Int = 40) :
         )
         return spots
             .filter { used == null || !sameTile(it, used) }
+            .filter { !blocked(it) }
             .minByOrNull { actor.location.getDistance(it) }
     }
 
@@ -160,7 +164,10 @@ class PickBananaTreeAction(rank: Int = 40) :
             tree.transform(0, 1, 0),
             tree.transform(0, -1, 0)
         )
-        return spots.minByOrNull { actor.location.getDistance(it) }
+        return spots
+            .filter { !blocked(it) }
+            .minByOrNull { actor.location.getDistance(it) }
+            ?: spots.minByOrNull { actor.location.getDistance(it) }
     }
 
     private fun nearestTree(actor: AmiliousMonkey): Location? {

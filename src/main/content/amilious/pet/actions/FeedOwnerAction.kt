@@ -91,8 +91,10 @@ class FeedOwnerAction(rank: Int = 80) :
 
     private fun walkTo(actor: AmiliousMonkey) {
         actor.pulseManager.clear()
+        actor.walkingQueue.reset()
         actor.pulseManager.run(object : MovementPulse(actor, actor.owner) {
-            override fun pulse(): Boolean = true
+            override fun pulse(): Boolean =
+                actor.location.getDistance(actor.owner.location) <= 1.5
         })
     }
 }

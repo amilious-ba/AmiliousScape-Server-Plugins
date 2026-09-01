@@ -5,7 +5,6 @@ import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.MonkeyConfig
 import core.game.interaction.MovementPulse
 import core.game.world.map.Location
-import core.game.world.map.RegionManager
 import kotlin.random.Random
 
 class WanderAction(rank: Int = 10) :

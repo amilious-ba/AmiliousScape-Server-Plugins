@@ -79,8 +79,10 @@ class GraveLootAction(rank: Int = 110) :
     private fun walkTo(actor: AmiliousMonkey) {
         val tile = dest ?: return
         actor.pulseManager.clear()
+        actor.walkingQueue.reset()
         actor.pulseManager.run(object : MovementPulse(actor, tile) {
-            override fun pulse(): Boolean = true
+            override fun pulse(): Boolean =
+                actor.location.getDistance(tile) <= 1.5
         })
     }
 }

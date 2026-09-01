@@ -44,10 +44,11 @@ class PickBananaTreeAction(rank: Int = 40) :
 
     override fun start(actor: AmiliousMonkey) {
         super.start(actor)
-        dest = nearestTile(actor)
+        dest = standTile(actor, nearestTile(actor))
         wait = 0
         walkTicks = 0
         picksOnThis = 0
+        goToPhase(Phase.WALK)
         walkTo(actor)
     }
 
@@ -60,8 +61,8 @@ class PickBananaTreeAction(rank: Int = 40) :
         when (phase) {
             Phase.WALK -> {
                 walkTicks++
-                if (actor.location.getDistance(tile) <= 2.0) {
-                    nextPhase()
+                if (actor.location.getDistance(tile) <= 1.2) {
+                    goToPhase(Phase.PICK)
                     return true
                 }
                 if (walkTicks > 25) return false
@@ -69,7 +70,7 @@ class PickBananaTreeAction(rank: Int = 40) :
                 return true
             }
             Phase.PICK -> {
-                if (actor.location.getDistance(tile) > 2.0) {
+                if (actor.location.getDistance(tile) > 1.2) {
                     goToPhase(Phase.WALK)
                     walkTicks = 0
                     walkTo(actor)
@@ -114,6 +115,17 @@ class PickBananaTreeAction(rank: Int = 40) :
         actor.pulseManager.run(object : MovementPulse(actor, tile) {
             override fun pulse(): Boolean = true
         })
+    }
+
+    private fun standTile(actor: AmiliousMonkey, tree: Location?): Location? {
+        if (tree == null) return null
+        val spots = listOf(
+            tree.transform(1, 0, 0),
+            tree.transform(-1, 0, 0),
+            tree.transform(0, 1, 0),
+            tree.transform(0, -1, 0)
+        )
+        return spots.minByOrNull { actor.location.getDistance(it) } ?: tree
     }
 
     private fun nearestTile(actor: AmiliousMonkey): Location? {

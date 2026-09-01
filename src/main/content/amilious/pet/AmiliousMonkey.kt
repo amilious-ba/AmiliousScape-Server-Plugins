@@ -77,6 +77,8 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
             definition.combatLevel = 0
         } catch (_: Exception) {
         }
+        isWalks = false
+        bindOptions()
     }
 
     fun graveEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_GRAVE, true)
@@ -86,6 +88,15 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     fun lootEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_LOOT, true)
     fun feedEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_FEED, true)
 
+    fun bindOptions() {
+        interaction.set(Option("Pack", 0))
+        interaction.set(Option("Talk-to", 1))
+        interaction.set(Option("Pet", 2))
+        interaction.set(Option("Empty", 3))
+        interaction.set(Option("Dismiss", 4))
+        refreshMenu()
+    }
+
     fun refreshPose() {
         val here = location
         walkingQueue.reset()
@@ -93,6 +104,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         animator.forceAnimation(Animation(-1))
         applyModel()
         properties.teleportLocation = here
+        bindOptions()
     }
 
     fun ownerInCombat(): Boolean {
@@ -132,15 +144,8 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         location = owner.location.transform(1, 0, 0)
         init()
         applyModel()
-        isWalks = false
-        interaction.set(Option("Pack", 0))
-        interaction.set(Option("Talk-to", 1))
-        interaction.set(Option("Pet", 2))
-        interaction.set(Option("Empty", 3))
-        interaction.set(Option("Dismiss", 4))
         loadBag()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
-        refreshMenu()
         sendMessage(owner, "Gigos hops down beside you.")
         playAudio(owner, MonkeyConfig.SFX_PLAYFUL)
         followOwner()
@@ -364,25 +369,6 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     fun isBone(item: Item): Boolean {
         val n = item.name.lowercase()
         return n == "bones" || n.endsWith(" bones") || n == "bone"
-    }
-
-    fun reviveFromSleep() {
-        val skin = MonkeyConfig.skinFor(owner)
-        val other = if (skin.id == MonkeyConfig.NPC_DARK) {
-            MonkeyConfig.NPC_LIGHT
-        } else {
-            MonkeyConfig.NPC_DARK
-        }
-        try {
-            transform(other)
-        } catch (_: Exception) {
-        }
-        applyModel()
-        animate(core.game.world.update.flag.context.Animation(-1))
-        animate(core.game.world.update.flag.context.Animation(65535))
-        if (skin.stand > 0) {
-            animate(core.game.world.update.flag.context.Animation(skin.stand))
-        }
     }
 
     fun bananaNoteId(): Int {

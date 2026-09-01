@@ -48,7 +48,7 @@ class ThrowDungAction(rank: Int = 50) :
                 rest(MonkeyConfig.DUNG_COOLDOWN)
                 actor.addHunger(-MonkeyConfig.HUNGER_THROW)
                 actor.face(victim)
-                actor.animate(Animation(MonkeyConfig.ANIM_ATTACK))
+                actor.animate(Animation(MonkeyConfig.skinFor(actor.owner).attack))
                 GigosHudPacket.send(actor.owner, actor)
                 nextPhase()
                 return true

@@ -30,7 +30,7 @@ class NapAction(rank: Int = 10) :
         slept = 0
         actor.pulseManager.clear()
         actor.walkingQueue.reset()
-        actor.animate(Animation(MonkeyConfig.ANIM_DEATH))
+        actor.animate(Animation(MonkeyConfig.skinFor(actor.owner).death))
         actor.graphics(Graphics(277, 20))
     }
 
@@ -66,7 +66,7 @@ class NapAction(rank: Int = 10) :
             actor.animator.animate(null)
         } catch (_: Exception) {
         }
-        val standId = actor.definition?.standAnimation ?: MonkeyConfig.ANIM_STAND
+        val standId = actor.definition?.standAnimation ?: MonkeyConfig.skinFor(actor.owner).stand
         if (standId > 0) {
             actor.animate(Animation(standId))
         } else {

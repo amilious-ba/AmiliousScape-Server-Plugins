@@ -69,12 +69,16 @@ object MonkeyConfig {
     )
 
     val SKINS = listOf(
-        MonkeySkin(132, "Gigos"),
-        MonkeySkin(4344, "Gigos"),
-        MonkeySkin(1462, "Gigos Ninja"),
-        MonkeySkin(1463, "Gigos Ninja"),
-        MonkeySkin(1466, "Ancient Gigos"),
-        MonkeySkin(1469, "Gigos")
+        MonkeySkin(4344, "Gigos",         attack = 220,  block = 221,  death = 223),
+        MonkeySkin(132,  "Gigos",         attack = 220,  block = 221,  death = 223),
+        MonkeySkin(1457, "Archer Gigos",  attack = 1394, block = 1393, death = 1384),
+        MonkeySkin(1456, "Archer Gigos",  attack = 1394, block = 1393, death = 1384),
+        MonkeySkin(1455, "Ninja Gigos",   attack = 1392, block = 1393, death = 1384),
+        MonkeySkin(1467, "Zombie Gigos",  attack = 1392, block = 1393, death = 1384),
+        MonkeySkin(1466, "Zombie Gigos",  attack = 1392, block = 1393, death = 1384),
+        MonkeySkin(1465, "Zombie Gigos",  attack = 1383, block = 1393, death = 1384),
+        MonkeySkin(1459, "Guard Gigos",   attack = 1402, block = 1403, death = 1404),
+        MonkeySkin(1460, "Guard Gigos",   attack = 1402, block = 1403, death = 1404)
     )
 
     fun skinFor(player: Player): MonkeySkin {

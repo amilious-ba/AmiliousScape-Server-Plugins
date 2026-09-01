@@ -37,11 +37,8 @@ class NapAction(rank: Int = 10) :
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
-        if (actor.ownerIdleTicks < 2 || actor.ownerInCombat()) {
-            if (phase != Phase.WAKE) {
-                beginWake(actor)
-                return true
-            }
+        if ((actor.ownerIdleTicks < 2 || actor.ownerInCombat()) && phase != Phase.WAKE) {
+            return beginWake(actor)
         }
         when (phase) {
             Phase.LIE -> {
@@ -54,8 +51,7 @@ class NapAction(rank: Int = 10) :
                     actor.graphics(Graphics(349, 0))
                 }
                 if (slept >= 40) {
-                    beginWake(actor)
-                    return true
+                    return beginWake(actor)
                 }
                 return true
             }
@@ -75,25 +71,18 @@ class NapAction(rank: Int = 10) :
         return skin.death // 223 on Gigos — same as old ANIM_DEATH
     }
 
-    private fun stand(actor: AmiliousMonkey) {
-        actor.graphics(Graphics(-1))
-        actor.refreshPose()
-        val standId = actor.definition?.standAnimation ?: MonkeyConfig.skinFor(actor.owner).stand
-        if (standId > 0) {
-            actor.animator.forceAnimation(Animation(standId))
-        }
-    }
-
-    private fun beginWake(actor: AmiliousMonkey) {
+    private fun beginWake(actor: AmiliousMonkey): Boolean {
         val skin = MonkeyConfig.skinFor(actor.owner)
         actor.graphics(Graphics(-1))
         if (skin.sleep > 0 && skin.wake > 0) {
             actor.animator.forceAnimation(Animation(skin.wake))
             wakeTicks = 0
             phase = Phase.WAKE
-            return
+            return true
         }
         finishStand(actor)
+        rest(20)
+        return false
     }
 
     private fun finishStand(actor: AmiliousMonkey) {

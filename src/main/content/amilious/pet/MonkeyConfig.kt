@@ -76,9 +76,7 @@ object MonkeyConfig {
         MonkeySkin(1455, "Ninja Gigos",   attack = 1392, block = 1393, death = 1384),
         MonkeySkin(1467, "Zombie Gigos",  attack = 1392, block = 1393, death = 1384),
         MonkeySkin(1466, "Zombie Gigos",  attack = 1392, block = 1393, death = 1384),
-        MonkeySkin(1465, "Zombie Gigos",  attack = 1383, block = 1393, death = 1384),
-        MonkeySkin(1459, "Guard Gigos",   attack = 1402, block = 1403, death = 1404),
-        MonkeySkin(1460, "Guard Gigos",   attack = 1402, block = 1403, death = 1404)
+        MonkeySkin(1465, "Zombie Gigos",  attack = 1383, block = 1393, death = 1384)
     )
 
     fun skinFor(player: Player): MonkeySkin {

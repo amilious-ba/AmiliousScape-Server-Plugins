@@ -75,6 +75,16 @@ class NapAction(rank: Int = 10) :
         actor.graphics(Graphics(-1))
         actor.walkingQueue.reset()
         actor.pulseManager.clear()
+
+        if (skin.deathOnSleep) {
+            actor.applyModel()
+            actor.animate(Animation(-1))
+            if (skin.stand > 0) {
+                actor.animate(Animation(skin.stand))
+            }
+            return
+        }
+
         when {
             skin.wake > 0 -> actor.animate(Animation(skin.wake))
             skin.stand > 0 -> actor.animate(Animation(skin.stand))
@@ -84,4 +94,5 @@ class NapAction(rank: Int = 10) :
             }
         }
     }
+
 }

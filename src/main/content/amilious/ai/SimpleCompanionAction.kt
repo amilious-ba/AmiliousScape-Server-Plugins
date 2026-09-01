@@ -1,5 +1,8 @@
 package content.amilious.ai
 
+import core.game.world.map.Location
+import core.game.world.map.RegionManager
+
 
 /**
  * Represents an abstract class providing a basic implementation for actions with cooldowns and priorities.
@@ -117,6 +120,14 @@ abstract class SimpleCompanionAction<T>(private val actionName: String, private 
 
 
     //#region Protected Methods ########################################################################################
+
+    protected fun blocked(tile: Location): Boolean {
+        if (tile.x < 0 || tile.y < 0) return true
+        val obj = RegionManager.getObject(tile) ?: return false
+        val n = obj.name.lowercase()
+        return n.contains("tree") || n.contains("wall") || n.contains("door")
+                || n.contains("rock") || n.contains("water") || n.contains("fence")
+    }
 
     protected fun holdFor(ticks: Int) {
         hold = ticks

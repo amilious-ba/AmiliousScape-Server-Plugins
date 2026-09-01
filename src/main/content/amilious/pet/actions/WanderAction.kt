@@ -5,6 +5,7 @@ import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.MonkeyConfig
 import core.game.interaction.MovementPulse
 import core.game.world.map.Location
+import core.game.world.map.RegionManager
 import kotlin.random.Random
 
 class WanderAction(rank: Int = 10) :
@@ -18,6 +19,8 @@ class WanderAction(rank: Int = 10) :
 
     override fun priorityWeight(): Int = 6
 
+    private var walkTicks = 0
+
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (!ready()) return false
         if (actor.ownerIdleTicks < 25) return false
@@ -27,13 +30,25 @@ class WanderAction(rank: Int = 10) :
 
     override fun start(actor: AmiliousMonkey) {
         super.start(actor)
-        var dx = 0
-        var dy = 0
-        while (dx == 0 && dy == 0) {
-            dx = Random.nextInt(-2, 3)
-            dy = Random.nextInt(-2, 3)
+        walkTicks = 0
+        dest = pickDest(actor) ?: actor.owner.location
+    }
+
+    private fun pickDest(actor: AmiliousMonkey): Location? {
+        val origin = actor.owner.location
+        for (i in 0 until 12) {
+            var dx = 0
+            var dy = 0
+            while (dx == 0 && dy == 0) {
+                dx = Random.nextInt(-2, 3)
+                dy = Random.nextInt(-2, 3)
+            }
+            val tile = origin.transform(dx, dy, 0)
+            if (!blocked(tile)) {
+                return tile
+            }
         }
-        dest = actor.owner.location.transform(dx, dy, 0)
+        return origin
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
@@ -42,28 +57,33 @@ class WanderAction(rank: Int = 10) :
 
         when (phase) {
             Phase.WALK -> {
-                if (!actor.pulseManager.hasPulseRunning()) {
-                    actor.pulseManager.clear()
-                    actor.pulseManager.run(object : MovementPulse(actor, tile) {
-                        override fun pulse(): Boolean {
-                            return actor.location.getDistance(tile) <= 1.2
-                        }
-                    })
-                }
+                walkTicks++
+                val tile = dest ?: return false
                 if (actor.location.getDistance(tile) <= 1.2) {
                     nextPhase()
+                    return true
+                }
+                val moving = actor.pulseManager.hasPulseRunning() || actor.walkingQueue.isMoving
+                if (!moving) {
+                    actor.pulseManager.clear()
+                    actor.walkingQueue.reset()
+                    actor.pulseManager.run(object : MovementPulse(actor, tile) {
+                        override fun pulse(): Boolean =
+                            actor.location.getDistance(tile) <= 1.2
+                    })
+                }
+                if (walkTicks > 20) {
+                    rest(8)
+                    return false
                 }
                 return true
             }
             Phase.HOLD -> {
                 actor.face(actor.owner)
-                if (!holding() && ready()) {
-                    // first time in HOLD — stand still this many ticks
+                if (hold <= 0) {
                     holdFor(Random.nextInt(8, 20))
                 }
-                if (holding()) {
-                    return true
-                }
+                if (holding()) return true
                 rest(Random.nextInt(8, 20))
                 return false
             }

@@ -74,8 +74,23 @@ class PickBananaTreeAction(rank: Int = 40) :
                     goToPhase(Phase.PICK)
                     return true
                 }
-                if (GigosPath.stuck(walkTicks, 20)) {
+                val stand = dest
+                if (stand != null && GigosPath.arrived(actor, stand, 0.6)) {
                     val next = otherStand(actor, target, stand)
+                    if (next == null) {
+                        treeCd[key(target)] = TREE_REST
+                        return abort(actor, 6)
+                    }
+                    dest = next
+                    walkTicks = 0
+                    if (!GigosPath.walk(actor, next)) {
+                        treeCd[key(target)] = TREE_REST
+                        return abort(actor, 6)
+                    }
+                    return true
+                }
+                if (GigosPath.stuck(walkTicks, 20)) {
+                    val next = otherStand(actor, target, dest)
                     if (next == null) {
                         treeCd[key(target)] = TREE_REST
                         return abort(actor, 6)
@@ -90,13 +105,15 @@ class PickBananaTreeAction(rank: Int = 40) :
                 }
                 if (!actor.walkingQueue.isMoving) {
                     val tile = dest ?: target
-                    if (!GigosPath.walk(actor, tile)) {
-                        val next = otherStand(actor, target, dest)
-                        if (next == null || !GigosPath.walk(actor, next)) {
-                            treeCd[key(target)] = TREE_REST
-                            return abort(actor, 6)
+                    if (!GigosPath.arrived(actor, tile, 0.6)) {
+                        if (!GigosPath.walk(actor, tile)) {
+                            val next = otherStand(actor, target, dest)
+                            if (next == null || !GigosPath.walk(actor, next)) {
+                                treeCd[key(target)] = TREE_REST
+                                return abort(actor, 6)
+                            }
+                            dest = next
                         }
-                        dest = next
                     }
                 }
                 return true

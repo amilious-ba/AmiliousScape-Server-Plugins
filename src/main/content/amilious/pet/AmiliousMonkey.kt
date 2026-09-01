@@ -12,6 +12,7 @@ import content.amilious.pet.actions.GraveLootAction
 import content.amilious.pet.actions.LootAction
 import content.amilious.pet.actions.NapAction
 import content.amilious.pet.actions.PickBananaTreeAction
+import content.amilious.pet.actions.PluckFeatherAction
 import content.amilious.pet.actions.SnackUntilFullAction
 import content.amilious.pet.actions.ThrowDungAction
 import content.amilious.pet.actions.UnburdenAction
@@ -58,6 +59,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
             .addAction(BonesToBananasAction())
             .addAction(LootAction())
             .addAction(ThrowDungAction())
+            .addAction(PluckFeatherAction())
             .addAction(WanderAction())
             .addAction(NapAction())
             .addAction(SnackUntilFullAction())

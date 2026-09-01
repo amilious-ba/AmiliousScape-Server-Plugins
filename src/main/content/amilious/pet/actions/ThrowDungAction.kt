@@ -44,6 +44,7 @@ class ThrowDungAction(rank: Int = 50) :
         if (victim == null || !victim.isActive) return false
         if (victim === actor || victim === actor.owner) return false
         if (actor.location.getDistance(victim.location) > 8) return false
+        if (isPoultry(victim)) return false
 
         when (phase) {
             Phase.WIND -> {
@@ -84,9 +85,16 @@ class ThrowDungAction(rank: Int = 50) :
         Repository.npcs.firstOrNull {
             it !== actor &&
                     it !== actor.owner &&
+                    it !is AmiliousMonkey &&
                     it.isActive &&
                     !it.isInvisible &&
+                    !isPoultry(it) &&
                     it.location.getDistance(actor.owner.location) <= 8 &&
                     it.properties.combatPulse.isAttacking
         }
+
+    private fun isPoultry(npc: NPC): Boolean {
+        val n = npc.name.lowercase()
+        return n.contains("chicken") || n.contains("duck") || n.contains("duckling")
+    }
 }

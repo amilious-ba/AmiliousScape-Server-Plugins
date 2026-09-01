@@ -23,6 +23,10 @@ object MonkeyConfig {
     const val UNBURDEN_FREE = 4     //start taking when you have this many empty slots or fewer
     const val DRUNK_BEER = 50
 
+    const val FEATHER_ID = 314
+    const val HUNGER_PLUCK = 1
+    const val SFX_CHICKEN = 355
+    const val SFX_DUCK = 413
 
     //Item Ids
     const val BANANA_ID = 1963      //the id of the banana item

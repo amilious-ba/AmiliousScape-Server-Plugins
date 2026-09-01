@@ -6,10 +6,12 @@ import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
 import content.amilious.pet.MonkeyConfig
 import core.api.playAudio
+import core.api.rewardXP
 import core.api.sendMessage
 import core.game.node.entity.combat.ImpactHandler
 import core.game.node.entity.impl.Projectile
 import core.game.node.entity.npc.NPC
+import core.game.node.entity.skill.Skills
 import core.game.world.map.RegionManager
 import core.game.world.repository.Repository
 import core.game.world.update.flag.context.Animation
@@ -54,8 +56,8 @@ class ThrowDungAction(rank: Int = 50) :
                 return true
             }
             Phase.CAST -> {
-                try {
-                    Projectile.create(actor, victim, 130, 12, 20, 41, 60, 5, 11).send()
+                try { //was 130
+                    Projectile.create(actor, victim, 97, 12, 20, 41, 60, 5, 11).send()
                     playAudio(actor.owner, MonkeyConfig.SFX_OOK)
                 } catch (_: Exception) {
                 }
@@ -64,10 +66,14 @@ class ThrowDungAction(rank: Int = 50) :
             }
             Phase.HIT -> {
                 pending = null
-                victim.graphics(Graphics(30))
+                victim.graphics(Graphics(98)) //was 30
                 val hit = 1 + (Math.random() * 3).toInt()
                 victim.impactHandler.manualHit(actor, hit, ImpactHandler.HitsplatType.NORMAL)
                 victim.properties.combatPulse.attack(actor)
+
+                rewardXP(actor.owner, Skills.RANGE, hit * 4.0)
+                rewardXP(actor.owner, Skills.HITPOINTS, hit * 1.33)
+
                 sendMessage(actor.owner, "Gigos flings something foul. ${victim.name} looks furious.")
                 return false
             }

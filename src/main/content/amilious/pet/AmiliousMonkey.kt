@@ -26,7 +26,6 @@ import core.game.node.entity.npc.NPC
 import core.game.node.entity.player.Player
 import core.game.node.item.GroundItem
 import core.game.node.item.Item
-import core.game.world.map.RegionManager
 import core.game.world.repository.Repository
 
 class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : NPC(id) {
@@ -43,6 +42,8 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     private var lastHudPhase = ""
 
     private val brain = CompanionBrain(this)
+
+    fun displayName(): String = MonkeyConfig.skinFor(owner).name
 
     init {
         brain
@@ -62,8 +63,19 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     }
 
     fun applyModel() {
-        val want = MonkeyConfig.npcId(owner)
-        if (id != want) transform(want)
+        val skin = MonkeyConfig.skinFor(owner)
+        try {
+            transform(skin.id)
+        } catch (_: Exception) {
+            id = skin.id
+            definition = core.cache.def.impl.NPCDefinition.forId(skin.id)
+        }
+        name = skin.name
+        try {
+            definition.name = skin.name
+            definition.combatLevel = 0
+        } catch (_: Exception) {
+        }
     }
 
     fun graveEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_GRAVE, true)
@@ -110,7 +122,6 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         location = owner.location.transform(1, 0, 0)
         init()
         applyModel()
-        name = "Gigos"
         isWalks = true
         interaction.set(Option("Pack", 0))
         interaction.set(Option("Talk-to", 1))

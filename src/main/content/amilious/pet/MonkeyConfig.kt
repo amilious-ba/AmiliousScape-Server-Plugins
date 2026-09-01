@@ -55,13 +55,40 @@ object MonkeyConfig {
     const val ATTR_FEED = "/save:amilious_monkey_feed"
     const val ATTR_PICK = "/save:amilious_monkey_pick"
     const val ATTR_UNBURDEN = "/save:amilious_monkey_unburden"
-    const val ATTR_DARK = "/save:amilious_gigos_dark"
     const val ATTR_GRAVE = "/save:amilious_grave"
+    const val ATTR_MODEL = "/save:amilious_monkey_model"
 
-    fun npcId(player: Player): Int =
-        if (player.getAttribute(ATTR_DARK, true)) NPC_DARK else NPC_LIGHT
+    data class MonkeySkin(
+        val id: Int,
+        val name: String,
+        val stand: Int = 222,
+        val walk: Int = 219,
+        val attack: Int = 220,
+        val block: Int = 221,
+        val death: Int = 223
+    )
 
-    fun isGigosId(id: Int): Boolean =
-        id == NPC_DARK || id == NPC_LIGHT
+    val SKINS = listOf(
+        MonkeySkin(132, "Gigos"),
+        MonkeySkin(4344, "Gigos"),
+        MonkeySkin(1462, "Gigos Ninja"),
+        MonkeySkin(1463, "Gigos Ninja"),
+        MonkeySkin(1466, "Ancient Gigos"),
+        MonkeySkin(1469, "Gigos")
+    )
+
+    fun skinFor(player: Player): MonkeySkin {
+        val i = player.getAttribute(ATTR_MODEL, 0).coerceIn(0, SKINS.lastIndex)
+        return SKINS[i]
+    }
+
+    fun nextSkin(player: Player): MonkeySkin {
+        val i = player.getAttribute(ATTR_MODEL, 0)
+        val n = (i + 1) % SKINS.size
+        player.setAttribute(ATTR_MODEL, n)
+        return SKINS[n]
+    }
+
+    fun npcId(player: Player): Int = skinFor(player).id
 
 }

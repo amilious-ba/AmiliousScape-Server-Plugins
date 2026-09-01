@@ -139,11 +139,10 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
                 }
                 10 -> {
                     if (live == null) reject(player, "Gigos is not out.")
-                    val on = player.getAttribute(MonkeyConfig.ATTR_DARK, true)
-                    setAttribute(player, MonkeyConfig.ATTR_DARK, !on)
+                    val skin = MonkeyConfig.nextSkin(player)
                     live!!.applyModel()
                     GigosHudPacket.send(player, live)
-                    notify(player, if (!on) "Gigos is dark." else "Gigos is light.")
+                    notify(player, "Gigos is now ${skin.name} (${skin.id}).")
                 }
                 11 -> {
                     if (live == null) reject(player, "Gigos is not out.")

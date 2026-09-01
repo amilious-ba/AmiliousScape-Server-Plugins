@@ -66,18 +66,20 @@ object MonkeyConfig {
         val attack: Int = 220,
         val block: Int = 221,
         val death: Int = 223,
-        val skipDeathOnSleep: Boolean = false
+        val sleep: Int = 0,
+        val wake: Int = 0,
+        val deathOnSleep: Boolean = false
     )
 
     val SKINS = listOf(
-        MonkeySkin(4344, "Gigos",         attack = 220,  block = 221,  death = 223),
-        MonkeySkin(132,  "Gigos",         attack = 220,  block = 221,  death = 223),
-        MonkeySkin(1457, "Archer Gigos",  attack = 1394, block = 1393, death = 1384),
-        MonkeySkin(1456, "Archer Gigos",  attack = 1394, block = 1393, death = 1384),
-        MonkeySkin(1455, "Ninja Gigos",   attack = 1392, block = 1393, death = 1384, skipDeathOnSleep = true),
-        MonkeySkin(1467, "Zombie Gigos",  attack = 1392, block = 1393, death = 1384),
-        MonkeySkin(1466, "Zombie Gigos",  attack = 1392, block = 1393, death = 1384),
-        MonkeySkin(1465, "Zombie Gigos",  attack = 1383, block = 1393, death = 1384)
+        MonkeySkin(4344, "Gigos",         attack = 220,  block = 221,  death = 223, deathOnSleep = true),
+        MonkeySkin(132,  "Gigos",         attack = 220,  block = 221,  death = 223, deathOnSleep = true),
+        MonkeySkin(1457, "Archer Gigos",  attack = 1394, block = 1393, sleep = 1390, wake = 1389, death = 1384),
+        MonkeySkin(1456, "Archer Gigos",  attack = 1394, block = 1393, sleep = 1390, wake = 1389, death = 1384),
+        MonkeySkin(1455, "Ninja Gigos",   attack = 1392, block = 1393, sleep = 1390, wake = 1389, death = 1384),
+        MonkeySkin(1467, "Zombie Gigos",  attack = 1392, block = 1393, sleep = 1390, wake = 1389, death = 1384),
+        MonkeySkin(1466, "Zombie Gigos",  attack = 1392, block = 1393, sleep = 1390, wake = 1389, death = 1384),
+        MonkeySkin(1465, "Zombie Gigos",  attack = 1383, block = 1393, sleep = 1390, wake = 1389, death = 1384)
     )
 
     fun skinFor(player: Player): MonkeySkin {

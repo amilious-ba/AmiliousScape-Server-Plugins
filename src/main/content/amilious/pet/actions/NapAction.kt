@@ -30,8 +30,8 @@ class NapAction(rank: Int = 10) :
         slept = 0
         actor.pulseManager.clear()
         actor.walkingQueue.reset()
-        var skin = MonkeyConfig.skinFor(actor.owner)
-        if(!skin.skipDeathOnSleep) actor.animate(Animation(skin.death))
+        val lie = lieAnim(actor)
+        if (lie > 0) actor.animate(Animation(lie))
         actor.graphics(Graphics(277, 20))
     }
 
@@ -48,9 +48,11 @@ class NapAction(rank: Int = 10) :
             }
             Phase.SLEEP -> {
                 slept++
-                if (slept % 8 == 0) {
-                    actor.graphics(Graphics(349, 0))
+                val skin = MonkeyConfig.skinFor(actor.owner)
+                if (skin.sleep > 0 && slept % 8 == 0) {
+                    actor.animate(Animation(skin.sleep))
                 }
+                if (slept % 8 == 0) actor.graphics(Graphics(349, 0))
                 if (slept >= 40) {
                     stand(actor)
                     rest(20)
@@ -61,20 +63,25 @@ class NapAction(rank: Int = 10) :
         }
     }
 
+    private fun lieAnim(actor: AmiliousMonkey): Int {
+        val skin = MonkeyConfig.skinFor(actor.owner)
+        if (skin.sleep > 0) return skin.sleep
+        if (skin.deathOnSleep) return skin.death
+        return 0
+    }
+
     private fun stand(actor: AmiliousMonkey) {
+        val skin = MonkeyConfig.skinFor(actor.owner)
         actor.graphics(Graphics(-1))
         actor.walkingQueue.reset()
         actor.pulseManager.clear()
-        try {
-            actor.animator.animate(null)
-        } catch (_: Exception) {
-        }
-        val standId = actor.definition?.standAnimation ?: MonkeyConfig.skinFor(actor.owner).stand
-        if (standId > 0) {
-            actor.animate(Animation(standId))
-        } else {
-            actor.animate(Animation(-1))
+        when {
+            skin.wake > 0 -> actor.animate(Animation(skin.wake))
+            skin.stand > 0 -> actor.animate(Animation(skin.stand))
+            else -> {
+                val standId = actor.definition?.standAnimation ?: 0
+                actor.animate(Animation(if (standId > 0) standId else -1))
+            }
         }
     }
-
 }

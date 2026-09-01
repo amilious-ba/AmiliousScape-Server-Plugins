@@ -77,21 +77,14 @@ class NapAction(rank: Int = 10) :
         actor.pulseManager.clear()
 
         if (skin.deathOnSleep) {
-            actor.applyModel()
-            actor.animate(Animation(-1))
-            if (skin.stand > 0) {
-                actor.animate(Animation(skin.stand))
-            }
+            actor.reviveFromSleep()
             return
         }
 
         when {
             skin.wake > 0 -> actor.animate(Animation(skin.wake))
             skin.stand > 0 -> actor.animate(Animation(skin.stand))
-            else -> {
-                val standId = actor.definition?.standAnimation ?: 0
-                actor.animate(Animation(if (standId > 0) standId else -1))
-            }
+            else -> actor.animate(Animation(-1))
         }
     }
 

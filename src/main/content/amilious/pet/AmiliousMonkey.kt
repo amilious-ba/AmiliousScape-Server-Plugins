@@ -27,6 +27,7 @@ import core.game.node.entity.player.Player
 import core.game.node.item.GroundItem
 import core.game.node.item.Item
 import core.game.world.repository.Repository
+import core.game.world.update.flag.context.Animation
 
 class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : NPC(id) {
 
@@ -354,6 +355,25 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     fun isBone(item: Item): Boolean {
         val n = item.name.lowercase()
         return n == "bones" || n.endsWith(" bones") || n == "bone"
+    }
+
+    fun reviveFromSleep() {
+        val skin = MonkeyConfig.skinFor(owner)
+        val other = if (skin.id == MonkeyConfig.NPC_DARK) {
+            MonkeyConfig.NPC_LIGHT
+        } else {
+            MonkeyConfig.NPC_DARK
+        }
+        try {
+            transform(other)
+        } catch (_: Exception) {
+        }
+        applyModel()
+        animate(core.game.world.update.flag.context.Animation(-1))
+        //animate(core.game.world.update.flag.context.Animation(65535))
+        if (skin.stand > 0) {
+            animate(core.game.world.update.flag.context.Animation(skin.stand))
+        }
     }
 
     fun bananaNoteId(): Int {

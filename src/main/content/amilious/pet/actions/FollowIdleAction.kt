@@ -19,6 +19,6 @@ class FollowIdleAction(rank: Int = 0) :
         if (dist > MonkeyConfig.FOLLOW_DIST) return false
         if (dist <= 1.5) return false
         if (!actor.pulseManager.hasPulseRunning()) actor.followOwner()
-        return true
+        return false
     }
 }

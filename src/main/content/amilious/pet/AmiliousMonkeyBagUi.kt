@@ -24,18 +24,18 @@ class AmiliousMonkeyBagUi : InterfaceListener {
                 askAmount(player, live, player.inventory, live.bag, invItem.id)
                 return@on true
             }
-            val moved = if (live.isBananaItem(invItem) || invItem.id == MonkeyConfig.BANANA_ID) {
+            val banana = live.isBananaItem(invItem) || invItem.id == MonkeyConfig.BANANA_ID
+            val moved = if (banana) {
                 depositBananas(player, live, want)
             } else {
                 transfer(player, live, player.inventory, live.bag, invItem.id, want)
             }
-            if (moved == 0) sendMessage(player, "Gigos cannot carry any more.")
-            else {
+            if (moved == 0) {
+                sendMessage(player, "Gigos cannot carry any more.")
+            } else {
                 live.saveBag()
                 live.openBagUi()
-                if (live.isBananaItem(invItem) || invItem.id == MonkeyConfig.BANANA_ID) {
-                    sendMessage(player, "Gigos notes the bananas.")
-                }
+                if (banana) sendMessage(player, "Gigos notes the bananas.")
             }
             true
         }
@@ -50,16 +50,13 @@ class AmiliousMonkeyBagUi : InterfaceListener {
                 askAmount(player, live, live.bag, player.inventory, bagItem.id)
                 return@on true
             }
-            val room = player.inventory.getMaximumAdd(bagItem)
-            if (room <= 0) {
+            val moved = transfer(player, live, live.bag, player.inventory, bagItem.id, want)
+            if (moved == 0) {
                 sendMessage(player, "You have no inventory space.")
-                return@on true
-            }
-            val move = Item(bagItem.id, min(want, min(bagItem.amount, room)))
-            if (live.bag.remove(move) && player.inventory.add(move)) {
+            } else {
                 live.saveBag()
                 live.openBagUi()
-                if (move.amount < bagItem.amount && want == Int.MAX_VALUE) {
+                if (moved < want && want == Int.MAX_VALUE) {
                     sendMessage(player, "Inventory full. Left the rest with Gigos.")
                 }
             }
@@ -78,36 +75,6 @@ class AmiliousMonkeyBagUi : InterfaceListener {
         }
     }
 
-    private fun depositBananas(player: Player, live: AmiliousMonkey, want: Int): Int {
-        val fresh = MonkeyConfig.BANANA_ID
-        val noted = noteId()
-        val have = player.inventory.getAmount(fresh) + player.inventory.getAmount(noted)
-        if (have <= 0 || want <= 0) return 0
-        val n = min(want, have)
-        var left = n
-        val takeNoted = min(left, player.inventory.getAmount(noted))
-        if (takeNoted > 0 && player.inventory.remove(Item(noted, takeNoted))) left -= takeNoted
-        val takeFresh = min(left, player.inventory.getAmount(fresh))
-        if (takeFresh > 0 && player.inventory.remove(Item(fresh, takeFresh))) left -= takeFresh
-        val got = n - left
-        if (got <= 0) return 0
-        if (live.addBananasNoted(got)) return got
-        player.inventory.add(Item(noted, got))
-        return 0
-    }
-
-    private fun depositGigos(player: Player): Boolean {
-        val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
-            ?: return false
-        val n = live.depositBagToBank(keepBananas = true)
-        sendMessage(
-            player,
-            if (n == 0) "Gigos has nothing to deposit (bananas stay)."
-            else "Gigos banks his pack. Bananas stay with him."
-        )
-        return true
-    }
-
     private fun askAmount(
         player: Player,
         live: AmiliousMonkey,
@@ -122,7 +89,11 @@ class AmiliousMonkeyBagUi : InterfaceListener {
                 else -> value.toString().toIntOrNull() ?: 0
             }
             if (n <= 0) return@sendInputDialogue
-            val moved = transfer(player, live, from, to, id, n)
+            val moved = if (isBanana(id) && to === live.bag) {
+                depositBananas(player, live, n)
+            } else {
+                transfer(player, live, from, to, id, n)
+            }
             if (moved == 0) sendMessage(player, "Could not move that many.")
             else {
                 live.saveBag()
@@ -149,6 +120,24 @@ class AmiliousMonkeyBagUi : InterfaceListener {
     private fun isBanana(id: Int): Boolean =
         id == MonkeyConfig.BANANA_ID || id == noteId()
 
+    private fun depositBananas(player: Player, live: AmiliousMonkey, want: Int): Int {
+        val fresh = MonkeyConfig.BANANA_ID
+        val noted = noteId()
+        val have = player.inventory.getAmount(fresh) + player.inventory.getAmount(noted)
+        if (have <= 0 || want <= 0) return 0
+        val n = min(want, have)
+        var left = n
+        val takeNoted = min(left, player.inventory.getAmount(noted))
+        if (takeNoted > 0 && player.inventory.remove(Item(noted, takeNoted))) left -= takeNoted
+        val takeFresh = min(left, player.inventory.getAmount(fresh))
+        if (takeFresh > 0 && player.inventory.remove(Item(fresh, takeFresh))) left -= takeFresh
+        val got = n - left
+        if (got <= 0) return 0
+        if (live.addBananasNoted(got)) return got
+        player.inventory.add(Item(noted, got))
+        return 0
+    }
+
     private fun transfer(
         player: Player,
         live: AmiliousMonkey,
@@ -158,15 +147,13 @@ class AmiliousMonkeyBagUi : InterfaceListener {
         want: Int
     ): Int {
         if (want <= 0) return 0
-        val n = min(want, from.getAmount(id))
-        if (n <= 0) return 0
-        if (isBanana(id) && to === live.bag) {
-            if (!from.remove(Item(id, n))) return 0
-            val noted = Item(noteId(), n)
-            return if (live.bag.add(noted)) n else 0
-        }
+        val have = from.getAmount(id)
+        if (have <= 0) return 0
+        val probe = Item(id, 1)
+        val room = to.getMaximumAdd(probe)
+        if (room <= 0) return 0
+        val n = min(want, min(have, room))
         val move = Item(id, n)
-        if (!to.hasSpaceFor(move)) return 0
         if (from.remove(move) && to.add(move)) return n
         return 0
     }

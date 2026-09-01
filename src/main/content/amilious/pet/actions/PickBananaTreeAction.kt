@@ -117,7 +117,7 @@ class PickBananaTreeAction(rank: Int = 40) :
     }
 
     private fun nearestTile(actor: AmiliousMonkey): Location? {
-        val origin = actor.location
+        val origin = actor.owner.location
         val z = origin.z
         var best: Location? = null
         var bestDist = RANGE
@@ -125,9 +125,9 @@ class PickBananaTreeAction(rank: Int = 40) :
             for (dy in -RANGE.toInt()..RANGE.toInt()) {
                 val loc = Location.create(origin.x + dx, origin.y + dy, z)
                 if (treeCd.containsKey(key(loc))) continue
-                val obj = RegionManager.getObject(z, loc.x, loc.y) ?: continue
+                val obj = RegionManager.getObject(loc) ?: continue
                 if (!isTree(obj.id, obj.name)) continue
-                val d = origin.getDistance(obj.location)
+                val d = actor.location.getDistance(obj.location)
                 if (d < bestDist) {
                     bestDist = d
                     best = obj.location
@@ -140,8 +140,7 @@ class PickBananaTreeAction(rank: Int = 40) :
     private fun isTree(id: Int, name: String): Boolean {
         if (id == 2078) return false
         if (id in PICKABLE) return true
-        val n = name.lowercase()
-        return n.contains("banana") && n.contains("tree")
+        return name.lowercase().contains("banana")
     }
 
     private fun key(loc: Location) = "${loc.x},${loc.y},${loc.z}"

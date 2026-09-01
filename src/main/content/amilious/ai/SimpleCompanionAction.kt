@@ -1,5 +1,6 @@
 package content.amilious.ai
 
+import core.game.node.entity.npc.NPC
 import core.game.world.map.Location
 import core.game.world.map.RegionManager
 
@@ -54,6 +55,7 @@ abstract class SimpleCompanionAction<T>(private val actionName: String, private 
 
     override fun start(actor: T) {
         hold = 0
+        GigosPath.takeOver(actor as NPC)
     }
 
     /**

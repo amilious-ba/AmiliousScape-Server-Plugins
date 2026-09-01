@@ -43,10 +43,20 @@ object GigosPath {
         return findClosedGate(actor, dest) != null
     }
 
+    /** Call once when an action takes over from follow. */
+    fun takeOver(actor: NPC) {
+        actor.pulseManager.clear()
+        actor.walkingQueue.reset()
+    }
+
+    fun stopPath(actor: NPC) {
+        actor.walkingQueue.reset()
+    }
+
     fun walk(actor: NPC, dest: Location, dist: Double = 1.5): Boolean {
         val path = Pathfinder.find(actor, dest, true, Pathfinder.SMART)
         if (path.isSuccessful || path.isMoveNear) {
-            stop(actor)
+            actor.walkingQueue.reset()
             path.walk(actor)
             return true
         }
@@ -56,7 +66,7 @@ object GigosPath {
         }
         val toGate = Pathfinder.find(actor, gate.location, true, Pathfinder.SMART)
         if (!toGate.isSuccessful && !toGate.isMoveNear) return false
-        stop(actor)
+        actor.walkingQueue.reset()
         toGate.walk(actor)
         return true
     }

@@ -1,11 +1,11 @@
 package content.amilious.pet.actions
 
+import content.amilious.ai.GigosPath
 import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.MonkeyConfig
 import core.api.playAudio
 import core.api.sendMessage
-import core.game.interaction.MovementPulse
 import core.game.node.entity.npc.NPC
 import core.game.node.item.Item
 import core.game.world.repository.Repository
@@ -39,7 +39,10 @@ class PluckFeatherAction(rank: Int = 50) :
         runTicks = 0
         val t = bird ?: return
         actor.face(t)
-        walkTo(actor, t)
+        if (!GigosPath.walk(actor, t.location)) {
+            bird = null
+            rest(8)
+        }
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
@@ -57,15 +60,19 @@ class PluckFeatherAction(rank: Int = 50) :
         when (phase) {
             Phase.RUN -> {
                 runTicks++
-                if (actor.location.getDistance(t.location) <= 1.6) {
-                    stopMove(actor)
+                actor.face(t)
+                if (GigosPath.arrived(actor, t.location, 1.6)) {
+                    GigosPath.stop(actor)
                     nextPhase()
                     return true
                 }
-                val moving = actor.pulseManager.hasPulseRunning() || actor.walkingQueue.isMoving
-                if (!moving) walkTo(actor, t)
-                if (runTicks > 24) {
+                if (GigosPath.stuck(runTicks, 24)) {
                     return abort(actor, 12)
+                }
+                if (!actor.walkingQueue.isMoving) {
+                    if (!GigosPath.walk(actor, t.location)) {
+                        return abort(actor, 12)
+                    }
                 }
                 return true
             }
@@ -77,7 +84,10 @@ class PluckFeatherAction(rank: Int = 50) :
                 val got = takeFeathers(actor, n)
                 if (got > 0) {
                     actor.addHunger(-MonkeyConfig.HUNGER_PLUCK)
-                    sendMessage(actor.owner, "Gigos yanks $got feather${if (got == 1) "" else "s"} from the ${t.name.lowercase()}.")
+                    sendMessage(
+                        actor.owner,
+                        "Gigos yanks $got feather${if (got == 1) "" else "s"} from the ${t.name.lowercase()}."
+                    )
                 }
                 nextPhase()
                 return true
@@ -91,28 +101,16 @@ class PluckFeatherAction(rank: Int = 50) :
     }
 
     private fun abort(actor: AmiliousMonkey, restTicks: Int): Boolean {
-        stopMove(actor)
+        GigosPath.stop(actor)
         bird = null
         rest(restTicks)
         return false
     }
 
-    private fun stopMove(actor: AmiliousMonkey) {
-        actor.pulseManager.clear()
-        actor.walkingQueue.reset()
-    }
-
-    private fun walkTo(actor: AmiliousMonkey, t: NPC) {
-        stopMove(actor)
-        actor.pulseManager.run(object : MovementPulse(actor, t) {
-            override fun pulse(): Boolean =
-                actor.location.getDistance(t.location) <= 1.6
-        })
-    }
-
     private fun findBird(actor: AmiliousMonkey): NPC? =
         Repository.npcs
             .filter { isBird(actor, it) }
+            .filter { GigosPath.canReach(actor, it.location) }
             .minByOrNull { actor.location.getDistance(it.location) }
 
     private fun isBird(actor: AmiliousMonkey, npc: NPC): Boolean {

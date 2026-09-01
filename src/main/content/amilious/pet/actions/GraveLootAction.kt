@@ -1,10 +1,10 @@
 package content.amilious.pet.actions
 
+import content.amilious.ai.GigosPath
 import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
 import core.api.sendMessage
-import core.game.interaction.MovementPulse
 import core.game.node.entity.combat.graves.GraveController
 import core.game.node.item.GroundItemManager
 import core.game.node.item.Item
@@ -31,24 +31,30 @@ class GraveLootAction(rank: Int = 110) :
         super.start(actor)
         dest = GraveController.activeGraves[actor.owner.details.uid]?.location
         walkTicks = 0
-        walkTo(actor)
+        val tile = dest ?: return
+        if (!GigosPath.walk(actor, tile)) {
+            // keep going — tick may open a gate or hit the teleport failsafe
+        }
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
-        val tile = dest ?: return false
+        val tile = dest ?: return abort(actor, 8)
         when (phase) {
             Phase.WALK -> {
                 walkTicks++
-                if (actor.location.getDistance(tile) <= 1.5) {
+                if (GigosPath.arrived(actor, tile, 1.5)) {
                     nextPhase()
                     return true
                 }
-                if (walkTicks > 40) {
+                if (GigosPath.stuck(walkTicks, 40)) {
+                    GigosPath.stop(actor)
                     actor.properties.teleportLocation = tile
                     nextPhase()
                     return true
                 }
-                if (!actor.pulseManager.hasPulseRunning()) walkTo(actor)
+                if (!actor.walkingQueue.isMoving) {
+                    GigosPath.walk(actor, tile)
+                }
                 return true
             }
             Phase.SCOOP -> {
@@ -76,13 +82,9 @@ class GraveLootAction(rank: Int = 110) :
         }
     }
 
-    private fun walkTo(actor: AmiliousMonkey) {
-        val tile = dest ?: return
-        actor.pulseManager.clear()
-        actor.walkingQueue.reset()
-        actor.pulseManager.run(object : MovementPulse(actor, tile) {
-            override fun pulse(): Boolean =
-                actor.location.getDistance(tile) <= 1.5
-        })
+    private fun abort(actor: AmiliousMonkey, restTicks: Int): Boolean {
+        GigosPath.stop(actor)
+        rest(restTicks)
+        return false
     }
 }

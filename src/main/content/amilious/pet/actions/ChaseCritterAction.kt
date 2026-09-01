@@ -1,10 +1,10 @@
 package content.amilious.pet.actions
 
+import content.amilious.ai.GigosPath
 import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.MonkeyConfig
 import core.api.playAudio
-import core.game.interaction.MovementPulse
 import core.game.node.entity.npc.NPC
 import core.game.world.repository.Repository
 import core.game.world.update.flag.context.Animation
@@ -36,7 +36,10 @@ class ChaseCritterAction(rank: Int = 10) :
         runTicks = 0
         val t = prey ?: return
         actor.face(t)
-        walkTo(actor, t)
+        if (!GigosPath.walk(actor, t.location)) {
+            prey = null
+            rest(8)
+        }
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
@@ -54,16 +57,19 @@ class ChaseCritterAction(rank: Int = 10) :
         when (phase) {
             Phase.RUN -> {
                 runTicks++
-                val dist = actor.location.getDistance(t.location)
-                if (dist <= 1.6) {
-                    stopMove(actor)
+                actor.face(t)
+                if (GigosPath.arrived(actor, t.location, 1.6)) {
+                    GigosPath.stop(actor)
                     nextPhase()
                     return true
                 }
-                val moving = actor.pulseManager.hasPulseRunning() || actor.walkingQueue.isMoving
-                if (!moving) walkTo(actor, t)
-                if (runTicks > 24) {
+                if (GigosPath.stuck(runTicks, 24)) {
                     return abort(actor, 12)
+                }
+                if (!actor.walkingQueue.isMoving) {
+                    if (!GigosPath.walk(actor, t.location)) {
+                        return abort(actor, 12)
+                    }
                 }
                 return true
             }
@@ -83,28 +89,16 @@ class ChaseCritterAction(rank: Int = 10) :
     }
 
     private fun abort(actor: AmiliousMonkey, restTicks: Int): Boolean {
-        stopMove(actor)
+        GigosPath.stop(actor)
         prey = null
         rest(restTicks)
         return false
     }
 
-    private fun stopMove(actor: AmiliousMonkey) {
-        actor.pulseManager.clear()
-        actor.walkingQueue.reset()
-    }
-
-    private fun walkTo(actor: AmiliousMonkey, t: NPC) {
-        stopMove(actor)
-        actor.pulseManager.run(object : MovementPulse(actor, t) {
-            override fun pulse(): Boolean =
-                actor.location.getDistance(t.location) <= 1.6
-        })
-    }
-
     private fun findPrey(actor: AmiliousMonkey): NPC? =
         Repository.npcs
             .filter { isPrey(actor, it) }
+            .filter { GigosPath.canReach(actor, it.location) }
             .minByOrNull { actor.location.getDistance(it.location) }
 
     private fun isPrey(actor: AmiliousMonkey, npc: NPC): Boolean {

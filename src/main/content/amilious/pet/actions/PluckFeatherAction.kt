@@ -26,6 +26,7 @@ class PluckFeatherAction(rank: Int = 50) :
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (!ready()) return false
+        if (!actor.lootEnabled()) return false
         if (actor.ownerInCombat()) return false
         if (actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) return false
         if (!canHoldFeathers(actor, 1)) return false

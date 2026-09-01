@@ -27,6 +27,7 @@ object MonkeyConfig {
     const val HUNGER_PLUCK = 1
     const val SFX_CHICKEN = 355
     const val SFX_DUCK = 413
+    const val EGG_ID = 1944
 
     //Item Ids
     const val BANANA_ID = 1963      //the id of the banana item

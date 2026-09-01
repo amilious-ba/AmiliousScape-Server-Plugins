@@ -112,10 +112,21 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     }
 
     fun ownerInCombat(): Boolean {
-        val p = owner
-        if (p.inCombat()) return true
-        val pulse = p.properties.combatPulse
-        return pulse != null && pulse.isAttacking
+        val pulse = owner.properties.combatPulse
+        val victim = pulse?.getVictim()
+        if (isPoultry(victim)) return false
+        if (pulse != null && pulse.isAttacking) return true
+        return owner.inCombat()
+    }
+
+    fun isEggItem(item: Item): Boolean =
+        item.id == MonkeyConfig.EGG_ID || item.name.equals("Egg", ignoreCase = true)
+
+
+    fun isPoultry(entity: core.game.node.entity.Entity?): Boolean {
+        val npc = entity as? NPC ?: return false
+        val n = npc.name.lowercase()
+        return n.contains("chicken") || n.contains("duck") || n.contains("duckling")
     }
 
     private fun tickCombatIdle() {
@@ -367,6 +378,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     fun canTake(gi: GroundItem): Boolean {
         if (gi.isRemoved) return false
         if (gi.id == MonkeyConfig.BANANA_ID) return true
+        if (gi.id == MonkeyConfig.EGG_ID) return true
         return isOwnerDrop(gi)
     }
 

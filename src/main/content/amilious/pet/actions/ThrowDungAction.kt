@@ -30,7 +30,7 @@ class ThrowDungAction(rank: Int = 50) :
         if (!ready()) return false
         if (!actor.dungEnabled()) return false
         if (actor.hunger() < MonkeyConfig.HUNGER_THROW) return false
-        if (!actor.owner.properties.combatPulse.isAttacking) return false
+        if (!actor.ownerInCombat()) return false
         return target(actor) != null
     }
 
@@ -44,7 +44,7 @@ class ThrowDungAction(rank: Int = 50) :
         if (victim == null || !victim.isActive) return false
         if (victim === actor || victim === actor.owner) return false
         if (actor.location.getDistance(victim.location) > 8) return false
-        if (isPoultry(victim)) return false
+        if (actor.isPoultry(victim)) return false
 
         when (phase) {
             Phase.WIND -> {
@@ -88,13 +88,10 @@ class ThrowDungAction(rank: Int = 50) :
                     it !is AmiliousMonkey &&
                     it.isActive &&
                     !it.isInvisible &&
-                    !isPoultry(it) &&
+                    !actor.isPoultry(it) &&
                     it.location.getDistance(actor.owner.location) <= 8 &&
                     it.properties.combatPulse.isAttacking
         }
 
-    private fun isPoultry(npc: NPC): Boolean {
-        val n = npc.name.lowercase()
-        return n.contains("chicken") || n.contains("duck") || n.contains("duckling")
-    }
+
 }

@@ -370,7 +370,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         }
         applyModel()
         animate(core.game.world.update.flag.context.Animation(-1))
-        //animate(core.game.world.update.flag.context.Animation(65535))
+        animate(core.game.world.update.flag.context.Animation(65535))
         if (skin.stand > 0) {
             animate(core.game.world.update.flag.context.Animation(skin.stand))
         }

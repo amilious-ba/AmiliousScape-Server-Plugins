@@ -330,7 +330,8 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     }
 
     fun followOwner() {
-        if (brain.busy() && brain.getCurrentActionName() != "follow") return
+        val act = brain.getCurrentActionName()
+        if (act != "idle" && act != "follow") return
         if (pulseManager.hasPulseRunning()) return
         pulseManager.run(object : MovementPulse(this, owner) {
             override fun pulse(): Boolean = false

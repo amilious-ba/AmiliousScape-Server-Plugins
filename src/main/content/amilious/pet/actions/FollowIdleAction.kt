@@ -11,17 +11,16 @@ class FollowIdleAction(rank: Int = 0) :
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
         val dist = actor.location.getDistance(actor.owner.location)
-        if (dist <= 1.5 || dist > MonkeyConfig.FOLLOW_DIST) return false
-        return actor.ownerIdleTicks < 25
+        return dist > 1.5 && dist <= MonkeyConfig.FOLLOW_DIST
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
         val dist = actor.location.getDistance(actor.owner.location)
         if (dist > MonkeyConfig.FOLLOW_DIST) return false
         if (dist <= 1.5) return false
-        if (actor.ownerIdleTicks >= 25) return false
-        if (!actor.pulseManager.hasPulseRunning()) actor.followOwner()
-        return true
+        if (!actor.pulseManager.hasPulseRunning()) {
+            actor.followOwner()
+        }
+        return false
     }
-
 }

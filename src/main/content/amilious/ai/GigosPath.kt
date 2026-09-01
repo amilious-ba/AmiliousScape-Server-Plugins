@@ -54,21 +54,38 @@ object GigosPath {
     }
 
     fun walk(actor: NPC, dest: Location, dist: Double = 1.5): Boolean {
+        if (arrived(actor, dest, dist)) return true
+
         val path = Pathfinder.find(actor, dest, true, Pathfinder.SMART)
+        val exact = path.isSuccessful && lastPoint(path)?.let {
+            Location.create(it.x, it.y, actor.location.z).getDistance(dest) <= dist
+        } == true
+
+        if (exact) {
+            actor.walkingQueue.reset()
+            path.walk(actor)
+            return true
+        }
+
+        val gate = findClosedGate(actor, dest)
+        if (gate != null) {
+            if (arrived(actor, gate.location, 1.5)) {
+                return openGate(actor, gate)
+            }
+            val toGate = Pathfinder.find(actor, gate.location, true, Pathfinder.SMART)
+            if (toGate.isSuccessful || toGate.isMoveNear) {
+                actor.walkingQueue.reset()
+                toGate.walk(actor)
+                return true
+            }
+        }
+
         if (path.isSuccessful || path.isMoveNear) {
             actor.walkingQueue.reset()
             path.walk(actor)
             return true
         }
-        val gate = findClosedGate(actor, dest) ?: return false
-        if (arrived(actor, gate.location, 1.5)) {
-            return openGate(actor, gate)
-        }
-        val toGate = Pathfinder.find(actor, gate.location, true, Pathfinder.SMART)
-        if (!toGate.isSuccessful && !toGate.isMoveNear) return false
-        actor.walkingQueue.reset()
-        toGate.walk(actor)
-        return true
+        return false
     }
 
     fun stuck(walkTicks: Int, limit: Int = 24): Boolean = walkTicks > limit
@@ -109,10 +126,11 @@ object GigosPath {
 
     private fun isOpenableGate(obj: Scenery): Boolean {
         val name = obj.name.lowercase()
-        if (!name.contains("gate") && !name.contains("door")) return false
         if (name.contains("locked")) return false
+        val named = name.contains("gate") || name.contains("door") || name.contains("fence")
         val opts = obj.definition.options ?: return false
-        return opts.any { it != null && it.equals("open", ignoreCase = true) }
+        val canOpen = opts.any { it != null && it.equals("open", ignoreCase = true) }
+        return named && canOpen
     }
 
     private fun openGate(actor: NPC, gate: Scenery): Boolean {
@@ -123,4 +141,5 @@ object GigosPath {
             false
         }
     }
+
 }

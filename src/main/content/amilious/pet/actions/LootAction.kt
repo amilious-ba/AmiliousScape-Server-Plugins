@@ -61,7 +61,7 @@ class LootAction(rank: Int = 60) :
                     nextPhase()
                     return true
                 }
-                if (GigosPath.stuck(walkTicks) || !GigosPath.canReach(actor, dest)) {
+                if (GigosPath.stuck(walkTicks)) {
                     rest(12)
                     return false
                 }

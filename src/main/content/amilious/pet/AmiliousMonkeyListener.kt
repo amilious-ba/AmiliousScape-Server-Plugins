@@ -16,7 +16,7 @@ import core.plugin.Initializable
 @Initializable
 class AmiliousMonkeyListener : InteractionListener {
 
-    private val ids = intArrayOf(MonkeyConfig.NPC_DARK, MonkeyConfig.NPC_LIGHT)
+    private val ids = MonkeyConfig.SKINS.map { it.id }.toIntArray()
 
     private val alcoholIds = intArrayOf(
         1917, // Beer

@@ -65,7 +65,7 @@ class NapAction(rank: Int = 10) :
         val skin = MonkeyConfig.skinFor(actor.owner)
         if (skin.sleep > 0) return skin.sleep
         if (skin.deathOnSleep) return skin.death
-        return MonkeyConfig.ANIM_DEATH
+        return skin.death
     }
 
     private fun stand(actor: AmiliousMonkey) {
@@ -80,7 +80,7 @@ class NapAction(rank: Int = 10) :
         val standId = when {
             skin.wake > 0 -> skin.wake
             skin.stand > 0 -> skin.stand
-            else -> actor.definition?.standAnimation ?: MonkeyConfig.ANIM_STAND
+            else -> actor.definition?.standAnimation ?: MonkeyConfig.skinFor(actor.owner).stand
         }
         if (standId > 0) {
             actor.animate(Animation(standId))

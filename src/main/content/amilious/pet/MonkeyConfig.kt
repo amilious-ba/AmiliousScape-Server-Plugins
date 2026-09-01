@@ -28,14 +28,6 @@ object MonkeyConfig {
     const val BANANA_ID = 1963      //the id of the banana item
     const val BANANA_NOTE_ID = 1964 //the id of noted bananas
 
-
-    //Animations
-    const val ANIM_ATTACK = 220
-    const val ANIM_BLOCK = 221
-    const val ANIM_DEATH = 223
-    const val ANIM_STAND = 222
-
-
     //sounds
     const val SFX_PLAYFUL = 633   // summon / dismiss
     const val SFX_OOK = 630       // throw, pick, eat, drunk

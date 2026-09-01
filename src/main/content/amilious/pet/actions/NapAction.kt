@@ -48,11 +48,9 @@ class NapAction(rank: Int = 10) :
             }
             Phase.SLEEP -> {
                 slept++
-                val skin = MonkeyConfig.skinFor(actor.owner)
-                if (skin.sleep > 0 && slept % 8 == 0) {
-                    actor.animate(Animation(skin.sleep))
+                if (slept % 8 == 0) {
+                    actor.graphics(Graphics(349, 0))
                 }
-                if (slept % 8 == 0) actor.graphics(Graphics(349, 0))
                 if (slept >= 40) {
                     stand(actor)
                     rest(20)
@@ -67,25 +65,27 @@ class NapAction(rank: Int = 10) :
         val skin = MonkeyConfig.skinFor(actor.owner)
         if (skin.sleep > 0) return skin.sleep
         if (skin.deathOnSleep) return skin.death
-        return 0
+        return MonkeyConfig.ANIM_DEATH
     }
 
     private fun stand(actor: AmiliousMonkey) {
-        val skin = MonkeyConfig.skinFor(actor.owner)
         actor.graphics(Graphics(-1))
         actor.walkingQueue.reset()
         actor.pulseManager.clear()
-
-        if (skin.deathOnSleep) {
-            actor.reviveFromSleep()
-            return
+        try {
+            actor.animator.animate(null)
+        } catch (_: Exception) {
         }
-
-        when {
-            skin.wake > 0 -> actor.animate(Animation(skin.wake))
-            skin.stand > 0 -> actor.animate(Animation(skin.stand))
-            else -> actor.animate(Animation(-1))
+        val skin = MonkeyConfig.skinFor(actor.owner)
+        val standId = when {
+            skin.wake > 0 -> skin.wake
+            skin.stand > 0 -> skin.stand
+            else -> actor.definition?.standAnimation ?: MonkeyConfig.ANIM_STAND
+        }
+        if (standId > 0) {
+            actor.animate(Animation(standId))
+        } else {
+            actor.animate(Animation(-1))
         }
     }
-
 }

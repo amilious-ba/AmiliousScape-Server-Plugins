@@ -3,6 +3,7 @@ package content.amilious.pet
 
 import content.amilious.ai.CompanionBrain
 import content.amilious.pet.actions.BonesToBananasAction
+import content.amilious.pet.actions.ChaseCritterAction
 import content.amilious.pet.actions.EatBananaAction
 import content.amilious.pet.actions.FeedOwnerAction
 import content.amilious.pet.actions.FollowIdleAction
@@ -60,6 +61,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
             .addAction(WanderAction())
             .addAction(NapAction())
             .addAction(SnackUntilFullAction())
+            .addAction(ChaseCritterAction())
             .addAction(FollowIdleAction())
     }
 

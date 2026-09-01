@@ -76,6 +76,7 @@ class ChaseCritterAction(rank: Int = 10) :
             }
             Phase.GLOAT -> {
                 actor.face(t)
+                playAudio(actor.owner, MonkeyConfig.SFX_PLAYFUL)
                 return abort(actor, Random.nextInt(10, 18))
             }
         }

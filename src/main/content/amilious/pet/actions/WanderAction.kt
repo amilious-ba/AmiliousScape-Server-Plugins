@@ -30,25 +30,37 @@ class WanderAction(rank: Int = 10) :
     override fun start(actor: AmiliousMonkey) {
         super.start(actor)
         walkTicks = 0
-        dest = pickDest(actor) ?: actor.owner.location
+        dest = pickDest(actor)
+        val tile = dest
+        if (tile != null && actor.location.getDistance(tile) > 0.6) {
+            actor.pulseManager.clear()
+            actor.walkingQueue.reset()
+            actor.pulseManager.run(object : MovementPulse(actor, tile) {
+                override fun pulse(): Boolean = arrived(actor, tile)
+            })
+        }
     }
 
     private fun pickDest(actor: AmiliousMonkey): Location? {
         val origin = actor.owner.location
-        for (i in 0 until 12) {
+        for (i in 0 until 16) {
             var dx = 0
             var dy = 0
             while (dx == 0 && dy == 0) {
-                dx = Random.nextInt(-2, 3)
-                dy = Random.nextInt(-2, 3)
+                dx = Random.nextInt(-5, 6)
+                dy = Random.nextInt(-5, 6)
             }
             val tile = origin.transform(dx, dy, 0)
-            if (!blocked(tile)) {
-                return tile
-            }
+            if (blocked(tile)) continue
+            if (origin.getDistance(tile) > MonkeyConfig.FOLLOW_DIST) continue
+            if (actor.location.getDistance(tile) < 1.5) continue
+            return tile
         }
-        return origin
+        return null
     }
+
+    private fun arrived(actor: AmiliousMonkey, tile: Location): Boolean =
+        actor.location.x == tile.x && actor.location.y == tile.y && actor.location.z == tile.z
 
     override fun tick(actor: AmiliousMonkey): Boolean {
         if (actor.ownerIdleTicks < 2) return false
@@ -57,8 +69,7 @@ class WanderAction(rank: Int = 10) :
         when (phase) {
             Phase.WALK -> {
                 walkTicks++
-                val tile = dest ?: return false
-                if (actor.location.getDistance(tile) <= 1.2) {
+                if (arrived(actor, tile)) {
                     nextPhase()
                     return true
                 }
@@ -67,8 +78,7 @@ class WanderAction(rank: Int = 10) :
                     actor.pulseManager.clear()
                     actor.walkingQueue.reset()
                     actor.pulseManager.run(object : MovementPulse(actor, tile) {
-                        override fun pulse(): Boolean =
-                            actor.location.getDistance(tile) <= 1.2
+                        override fun pulse(): Boolean = arrived(actor, tile)
                     })
                 }
                 if (walkTicks > 20) {
@@ -88,4 +98,5 @@ class WanderAction(rank: Int = 10) :
             }
         }
     }
+
 }

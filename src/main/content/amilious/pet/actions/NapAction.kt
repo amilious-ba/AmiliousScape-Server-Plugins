@@ -30,7 +30,8 @@ class NapAction(rank: Int = 10) :
         slept = 0
         actor.pulseManager.clear()
         actor.walkingQueue.reset()
-        actor.animate(Animation(MonkeyConfig.skinFor(actor.owner).death))
+        var skin = MonkeyConfig.skinFor(actor.owner)
+        if(!skin.skipDeathOnSleep) actor.animate(Animation(skin.death))
         actor.graphics(Graphics(277, 20))
     }
 

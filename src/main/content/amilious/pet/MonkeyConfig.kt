@@ -65,7 +65,8 @@ object MonkeyConfig {
         val walk: Int = 219,
         val attack: Int = 220,
         val block: Int = 221,
-        val death: Int = 223
+        val death: Int = 223,
+        val skipDeathOnSleep: Boolean = false
     )
 
     val SKINS = listOf(
@@ -73,7 +74,7 @@ object MonkeyConfig {
         MonkeySkin(132,  "Gigos",         attack = 220,  block = 221,  death = 223),
         MonkeySkin(1457, "Archer Gigos",  attack = 1394, block = 1393, death = 1384),
         MonkeySkin(1456, "Archer Gigos",  attack = 1394, block = 1393, death = 1384),
-        MonkeySkin(1455, "Ninja Gigos",   attack = 1392, block = 1393, death = 1384),
+        MonkeySkin(1455, "Ninja Gigos",   attack = 1392, block = 1393, death = 1384, skipDeathOnSleep = true),
         MonkeySkin(1467, "Zombie Gigos",  attack = 1392, block = 1393, death = 1384),
         MonkeySkin(1466, "Zombie Gigos",  attack = 1392, block = 1393, death = 1384),
         MonkeySkin(1465, "Zombie Gigos",  attack = 1383, block = 1393, death = 1384)

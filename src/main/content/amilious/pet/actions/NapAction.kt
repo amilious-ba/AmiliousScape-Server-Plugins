@@ -64,23 +64,13 @@ class NapAction(rank: Int = 10) :
     private fun lieAnim(actor: AmiliousMonkey): Int {
         val skin = MonkeyConfig.skinFor(actor.owner)
         if (skin.sleep > 0) return skin.sleep
-        if (skin.deathOnSleep) return skin.death
-        return skin.death
+        return skin.death // 223 on Gigos — same as old ANIM_DEATH
     }
 
     private fun stand(actor: AmiliousMonkey) {
-        val skin = MonkeyConfig.skinFor(actor.owner)
         actor.graphics(Graphics(-1))
-        actor.walkingQueue.reset()
-        actor.pulseManager.clear()
-
-        val standId = when {
-            skin.wake > 0 -> skin.wake
-            skin.stand > 0 -> skin.stand
-            else -> actor.definition?.standAnimation ?: skin.stand
-        }
-
-        actor.animator.forceAnimation(Animation(-1))
+        actor.refreshPose()
+        val standId = actor.definition?.standAnimation ?: MonkeyConfig.skinFor(actor.owner).stand
         if (standId > 0) {
             actor.animator.forceAnimation(Animation(standId))
         }

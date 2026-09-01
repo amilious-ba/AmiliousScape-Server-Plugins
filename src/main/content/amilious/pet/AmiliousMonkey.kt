@@ -86,6 +86,15 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     fun lootEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_LOOT, true)
     fun feedEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_FEED, true)
 
+    fun refreshPose() {
+        val here = location
+        walkingQueue.reset()
+        pulseManager.clear()
+        animator.forceAnimation(Animation(-1))
+        applyModel()
+        properties.teleportLocation = here
+    }
+
     fun ownerInCombat(): Boolean {
         val p = owner
         if (p.inCombat()) return true

@@ -177,6 +177,11 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     fun brainPhase(): Int = brain.getCurrentPhase()
     fun brainPhases(): Int = brain.getCurrentActionPhases()
 
+    override fun finalizeDeath(killer: core.game.node.entity.Entity?) {
+        skills.lifepoints = skills.maximumLifepoints
+        isInvisible = false
+    }
+
     fun takeNonBananasToOwner(): Int {
         var moved = 0
         for (item in bag.toArray()) {

@@ -55,13 +55,6 @@ abstract class SimpleCompanionAction<T>(private val actionName: String, private 
 
     override fun start(actor: T) {
         hold = 0
-        val npc = actor as? NPC ?: return
-        if (actor is content.amilious.pet.AmiliousMonkey) {
-            actor.brain.path.takeOver(npc)
-        } else {
-            npc.pulseManager.clear()
-            npc.walkingQueue.reset()
-        }
     }
 
     /**

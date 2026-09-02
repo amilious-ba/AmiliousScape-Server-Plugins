@@ -53,8 +53,6 @@ class CompanionPath {
 
     fun canReach(actor: NPC, dest: Location): Boolean {
         if (canReachExact(actor, dest)) return true
-        val path = Pathfinder.find(actor, dest, true, Pathfinder.SMART)
-        if (path.isSuccessful || path.isMoveNear) return true
         return findGate(actor, dest) != null
     }
 
@@ -80,8 +78,8 @@ class CompanionPath {
             return true
         }
 
-        val path = Pathfinder.find(actor, dest, true, Pathfinder.SMART)
-        if (path.isSuccessful || path.isMoveNear) {
+        if (canReachExact(actor, dest)) {
+            val path = Pathfinder.find(actor, dest, true, Pathfinder.SMART)
             actor.walkingQueue.reset()
             path.walk(actor)
             return true
@@ -101,6 +99,12 @@ class CompanionPath {
             return walkNear(actor, throughFrom(actor.location, gate.location, dest))
         }
 
+        val fallback = Pathfinder.find(actor, dest, true, Pathfinder.SMART)
+        if (fallback.isSuccessful || fallback.isMoveNear) {
+            actor.walkingQueue.reset()
+            fallback.walk(actor)
+            return true
+        }
         return false
     }
 
@@ -135,8 +139,7 @@ class CompanionPath {
                 val obj = RegionManager.getObject(loc) ?: continue
                 if (!isGate(obj)) continue
                 if (alreadyPast(actor, loc, dest)) continue
-                if (!isBetween(actor.location, loc, dest)) continue
-                val score = loc.getDistance(actor.location) + loc.getDistance(dest) * 0.25
+                val score = loc.getDistance(actor.location) + loc.getDistance(dest) * 0.35
                 if (score < bestScore) {
                     bestScore = score
                     best = obj
@@ -203,17 +206,8 @@ class CompanionPath {
             else -> -1
         }
         val stepX = kotlin.math.abs(dest.x - from.x) >= kotlin.math.abs(dest.y - from.y)
-        return if (stepX) {
-            Location.create(gate.x + dx, gate.y, gate.z)
-        } else {
-            Location.create(gate.x, gate.y + dy, gate.z)
-        }
-    }
-
-    private fun isBetween(from: Location, mid: Location, dest: Location): Boolean {
-        val direct = from.getDistance(dest)
-        val via = from.getDistance(mid) + mid.getDistance(dest)
-        return via <= direct + 1.5
+        return if (stepX) Location.create(gate.x + dx, gate.y, gate.z)
+        else Location.create(gate.x, gate.y + dy, gate.z)
     }
 
     private fun lastPoint(path: Path): Point? {

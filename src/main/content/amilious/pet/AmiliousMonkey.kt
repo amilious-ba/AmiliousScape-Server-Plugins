@@ -314,6 +314,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         tickDrunk()
         noteOwnerIdle()
         tickCombatIdle()
+        noteOwnerTeleport()
         brain.tick()
         val name = brain.getCurrentActionName()
         val phase = brain.getCurrentActionPhaseName()
@@ -321,6 +322,19 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
             lastHudAction = name
             lastHudPhase = phase
             GigosHudPacket.send(owner, this)
+        }
+    }
+
+    private fun noteOwnerTeleport() {
+        val here = owner.location
+        if (lastOwnerX == Int.MIN_VALUE) return
+        val jumped = kotlin.math.abs(here.x - lastOwnerX) > 16 ||
+                kotlin.math.abs(here.y - lastOwnerY) > 16 ||
+                here.z != location.z
+        if (!jumped) return
+        brain.interrupt()
+        if (location.getDistance(here) > MonkeyConfig.FOLLOW_DIST) {
+            followOwner()
         }
     }
 

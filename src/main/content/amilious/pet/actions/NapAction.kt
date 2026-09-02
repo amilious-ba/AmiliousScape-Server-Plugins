@@ -29,6 +29,8 @@ class NapAction(rank: Int = 10) :
     override fun start(actor: AmiliousMonkey) {
         super.start(actor)
         slept = 0
+        wakeTicks = 0
+        actor.brain.path.stop(actor)
         actor.pulseManager.clear()
         actor.walkingQueue.reset()
         val lie = lieAnim(actor)
@@ -57,8 +59,10 @@ class NapAction(rank: Int = 10) :
             }
             Phase.WAKE -> {
                 wakeTicks++
-                if (wakeTicks < 4) return true
-                finishStand(actor)
+                if (wakeTicks == 1) {
+                    finishStand(actor)
+                }
+                if (wakeTicks < 6) return true
                 rest(20)
                 return false
             }
@@ -68,7 +72,7 @@ class NapAction(rank: Int = 10) :
     private fun lieAnim(actor: AmiliousMonkey): Int {
         val skin = MonkeyConfig.skinFor(actor.owner)
         if (skin.sleep > 0) return skin.sleep
-        return skin.death // 223 on Gigos — same as old ANIM_DEATH
+        return -1
     }
 
     private fun beginWake(actor: AmiliousMonkey): Boolean {
@@ -76,13 +80,10 @@ class NapAction(rank: Int = 10) :
         actor.graphics(Graphics(-1))
         if (skin.sleep > 0 && skin.wake > 0) {
             actor.animator.forceAnimation(Animation(skin.wake))
-            wakeTicks = 0
-            phase = Phase.WAKE
-            return true
         }
-        finishStand(actor)
-        rest(20)
-        return false
+        wakeTicks = 0
+        phase = Phase.WAKE
+        return true
     }
 
     private fun finishStand(actor: AmiliousMonkey) {
@@ -93,5 +94,4 @@ class NapAction(rank: Int = 10) :
             actor.animator.forceAnimation(Animation(standId))
         }
     }
-
 }

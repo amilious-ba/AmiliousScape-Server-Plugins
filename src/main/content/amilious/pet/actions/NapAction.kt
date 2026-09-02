@@ -38,9 +38,6 @@ class NapAction(rank: Int = 10) :
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
-        actor.skills.lifepoints = actor.skills.maximumLifepoints
-        actor.isInvisible = false
-
         if ((actor.ownerIdleTicks < 2 || actor.ownerInCombat()) && phase != Phase.WAKE) {
             return beginWake(actor)
         }
@@ -78,21 +75,18 @@ class NapAction(rank: Int = 10) :
     private fun beginWake(actor: AmiliousMonkey): Boolean {
         val skin = MonkeyConfig.skinFor(actor.owner)
         actor.graphics(Graphics(-1))
-        finishStand(actor)
         if (skin.sleep > 0 && skin.wake > 0) {
             actor.animator.forceAnimation(Animation(skin.wake))
             wakeTicks = 0
             phase = Phase.WAKE
             return true
         }
+        finishStand(actor)
         rest(20)
         return false
     }
 
     private fun finishStand(actor: AmiliousMonkey) {
-        actor.skills.lifepoints = actor.skills.maximumLifepoints
-        actor.isInvisible = false
-        actor.animate(Animation(-1))
         actor.refreshPose()
         val standId = actor.definition?.standAnimation
             ?: MonkeyConfig.skinFor(actor.owner).stand

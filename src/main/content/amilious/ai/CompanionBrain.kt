@@ -192,14 +192,16 @@ class CompanionBrain<T>(private val actor: T) {
         if (npc != null) {
             path.noteMove(npc)
             val moving = npc.walkingQueue.isMoving || npc.pulseManager.hasPulseRunning()
-            if (!moving && current != null) stuckTicks++ else stuckTicks = 0
+            val walking = path.hasTarget()
+            if (!moving && walking && current != null) {
+                stuckTicks++
+            } else {
+                stuckTicks = 0
+            }
             if (stuckTicks > 10) {
-                npc.walkingQueue.reset()
-                npc.pulseManager.clear()
-                path.resetStuck()
+                release(npc)
                 current = null
                 stopWhenAble = false
-                stuckTicks = 0
             }
         }
 
@@ -207,15 +209,30 @@ class CompanionBrain<T>(private val actor: T) {
         if (running != null) {
             val keep = running.tick(actor)
             if (!keep || stopWhenAble) {
+                if (npc != null) release(npc)
                 current = null
                 stopWhenAble = false
             }
             if (keep && current != null) return
         }
+
         current = pickNext()
+        if (current == null) {return}
+        if (npc != null) release(npc)
         current?.start(actor)
         val next = current ?: return
-        if (!next.tick(actor)) current = null
+        if (!next.tick(actor)) {
+            if (npc != null) release(npc)
+            current = null
+        }
+    }
+
+    private fun release(npc: NPC) {
+        path.stop(npc)
+        npc.pulseManager.clear()
+        npc.walkingQueue.reset()
+        path.resetStuck()
+        stuckTicks = 0
     }
 
     /**

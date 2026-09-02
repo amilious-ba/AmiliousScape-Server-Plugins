@@ -34,7 +34,7 @@ class NapAction(rank: Int = 10) :
         actor.pulseManager.clear()
         actor.walkingQueue.reset()
         val lie = lieAnim(actor)
-        if (lie > 0) actor.animate(Animation(lie))
+        if (lie > 0) actor.animator.forceAnimation(Animation(lie))
         actor.graphics(Graphics(277, 20))
     }
 
@@ -49,6 +49,10 @@ class NapAction(rank: Int = 10) :
             }
             Phase.SLEEP -> {
                 slept++
+                val lie = lieAnim(actor)
+                if (lie > 0 && slept % 3 == 0) {
+                    actor.animator.forceAnimation(Animation(lie))
+                }
                 if (slept % 8 == 0) {
                     actor.graphics(Graphics(349, 0))
                 }

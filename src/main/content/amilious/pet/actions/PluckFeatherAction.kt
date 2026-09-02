@@ -1,6 +1,5 @@
 package content.amilious.pet.actions
 
-import content.amilious.ai.GigosPath
 import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.MonkeyConfig
@@ -27,6 +26,7 @@ class PluckFeatherAction(rank: Int = 50) :
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (!ready()) return false
         if (!actor.lootEnabled()) return false
+        if (actor.hunger() < MonkeyConfig.HUNGER_PLUCK) return false
         if (actor.ownerInCombat()) return false
         if (actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST) return false
         if (!canHoldFeathers(actor, 1)) return false
@@ -39,13 +39,14 @@ class PluckFeatherAction(rank: Int = 50) :
         runTicks = 0
         val t = bird ?: return
         actor.face(t)
-        if (!GigosPath.walk(actor, t.location)) {
+        if (!actor.brain.path.walk(actor, t.location)) {
             bird = null
             rest(8)
         }
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
+        val path = actor.brain.path
         val t = bird
         if (t == null || !t.isActive) {
             return abort(actor, 10)
@@ -61,22 +62,24 @@ class PluckFeatherAction(rank: Int = 50) :
             Phase.RUN -> {
                 runTicks++
                 actor.face(t)
-                if (GigosPath.arrived(actor, t.location, 1.6)) {
-                    GigosPath.stop(actor)
+                val dest = t.location
+                if (path.arrived(actor, dest, 1.6)) {
+                    path.stop(actor)
                     nextPhase()
                     return true
                 }
-                if (GigosPath.stuck(runTicks, 24)) {
+                if (path.reallyStuck(actor, dest) || path.stuck(runTicks, 24)) {
                     return abort(actor, 12)
                 }
-                if (!actor.walkingQueue.isMoving) {
-                    if (!GigosPath.walk(actor, t.location)) {
-                        return abort(actor, 12)
-                    }
+                if (!path.walk(actor, dest)) {
+                    return abort(actor, 12)
                 }
                 return true
             }
             Phase.PLUCK -> {
+                if (actor.hunger() < MonkeyConfig.HUNGER_PLUCK) {
+                    return abort(actor, 8)
+                }
                 actor.face(t)
                 actor.animate(Animation(MonkeyConfig.skinFor(actor.owner).attack))
                 playAudio(actor.owner, sfxFor(t))
@@ -101,7 +104,7 @@ class PluckFeatherAction(rank: Int = 50) :
     }
 
     private fun abort(actor: AmiliousMonkey, restTicks: Int): Boolean {
-        GigosPath.stop(actor)
+        actor.brain.path.stop(actor)
         bird = null
         rest(restTicks)
         return false
@@ -110,7 +113,7 @@ class PluckFeatherAction(rank: Int = 50) :
     private fun findBird(actor: AmiliousMonkey): NPC? =
         Repository.npcs
             .filter { isBird(actor, it) }
-            .filter { GigosPath.canReach(actor, it.location) }
+            .filter { actor.brain.path.canReach(actor, it.location) }
             .minByOrNull { actor.location.getDistance(it.location) }
 
     private fun isBird(actor: AmiliousMonkey, npc: NPC): Boolean {

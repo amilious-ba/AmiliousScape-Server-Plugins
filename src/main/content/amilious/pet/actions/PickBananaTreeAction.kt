@@ -1,6 +1,5 @@
 package content.amilious.pet.actions
 
-import content.amilious.ai.GigosPath
 import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
@@ -53,31 +52,30 @@ class PickBananaTreeAction(rank: Int = 40) :
         picksOnThis = 0
         goToPhase(Phase.WALK)
         val tile = dest ?: tree
-        if (tile == null || !GigosPath.walk(actor, tile)) {
+        if (tile == null || !actor.brain.path.walk(actor, tile)) {
             tree?.let { treeCd[key(it)] = TREE_REST }
             rest(6)
         }
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
+        val path = actor.brain.path
         if (actor.ownerIdleTicks < 2) {
-            GigosPath.stop(actor)
-            rest(4)
-            return false
+            return abort(actor, 4)
         }
         val target = tree ?: return abort(actor, 6)
         when (phase) {
             Phase.WALK -> {
                 walkTicks++
                 val stand = dest
-                if (atTree(actor, target) && (stand == null || GigosPath.arrived(actor, stand, 1.0))) {
-                    GigosPath.stop(actor)
+                if (atTree(actor, target) && (stand == null || path.arrived(actor, stand, 1.0))) {
+                    path.stop(actor)
                     faceTree(actor, target)
                     wait = 2
                     goToPhase(Phase.FACE)
                     return true
                 }
-                if (stand != null && GigosPath.arrived(actor, stand, 0.6) && !atTree(actor, target)) {
+                if (stand != null && path.arrived(actor, stand, 0.6) && !atTree(actor, target)) {
                     val next = otherStand(actor, target, stand)
                     if (next == null) {
                         treeCd[key(target)] = TREE_REST
@@ -85,13 +83,15 @@ class PickBananaTreeAction(rank: Int = 40) :
                     }
                     dest = next
                     walkTicks = 0
-                    if (!GigosPath.walk(actor, next)) {
+                    path.resetStuck()
+                    if (!path.walk(actor, next)) {
                         treeCd[key(target)] = TREE_REST
                         return abort(actor, 6)
                     }
                     return true
                 }
-                if (GigosPath.stuck(walkTicks, 20)) {
+                val walkDest = dest ?: target
+                if (path.reallyStuck(actor, walkDest) || path.stuck(walkTicks, 20)) {
                     val next = otherStand(actor, target, dest)
                     if (next == null) {
                         treeCd[key(target)] = TREE_REST
@@ -99,24 +99,22 @@ class PickBananaTreeAction(rank: Int = 40) :
                     }
                     dest = next
                     walkTicks = 0
-                    if (!GigosPath.walk(actor, next)) {
+                    path.resetStuck()
+                    if (!path.walk(actor, next)) {
                         treeCd[key(target)] = TREE_REST
                         return abort(actor, 6)
                     }
                     return true
                 }
-                if (!actor.walkingQueue.isMoving) {
-                    val tile = dest ?: target
-                    if (!GigosPath.arrived(actor, tile, 0.6)) {
-                        if (!GigosPath.walk(actor, tile)) {
-                            val next = otherStand(actor, target, dest)
-                            if (next == null || !GigosPath.walk(actor, next)) {
-                                treeCd[key(target)] = TREE_REST
-                                return abort(actor, 6)
-                            }
-                            dest = next
-                        }
+                if (!path.walk(actor, walkDest)) {
+                    val next = otherStand(actor, target, dest)
+                    if (next == null || !path.walk(actor, next)) {
+                        treeCd[key(target)] = TREE_REST
+                        return abort(actor, 6)
                     }
+                    dest = next
+                    walkTicks = 0
+                    path.resetStuck()
                 }
                 return true
             }
@@ -132,7 +130,7 @@ class PickBananaTreeAction(rank: Int = 40) :
                     goToPhase(Phase.WALK)
                     walkTicks = 0
                     dest = standTile(actor, target)
-                    dest?.let { GigosPath.walk(actor, it) }
+                    dest?.let { path.walk(actor, it) }
                     return true
                 }
                 faceTree(actor, target)
@@ -168,7 +166,7 @@ class PickBananaTreeAction(rank: Int = 40) :
     }
 
     private fun abort(actor: AmiliousMonkey, restTicks: Int): Boolean {
-        GigosPath.stop(actor)
+        actor.brain.path.stop(actor)
         rest(restTicks)
         return false
     }
@@ -184,6 +182,7 @@ class PickBananaTreeAction(rank: Int = 40) :
     }
 
     private fun otherStand(actor: AmiliousMonkey, tree: Location, used: Location?): Location? {
+        val path = actor.brain.path
         val spots = arrayOf(
             tree.transform(1, 0, 0),
             tree.transform(-1, 0, 0),
@@ -193,12 +192,13 @@ class PickBananaTreeAction(rank: Int = 40) :
         return spots
             .filter { used == null || !sameTile(it, used) }
             .filter { !tileBlocked(it) }
-            .filter { GigosPath.canReach(actor, it) }
+            .filter { path.canReach(actor, it) }
             .minByOrNull { actor.location.getDistance(it) }
     }
 
     private fun standTile(actor: AmiliousMonkey, tree: Location?): Location? {
         if (tree == null) return null
+        val path = actor.brain.path
         val spots = arrayOf(
             tree.transform(1, 0, 0),
             tree.transform(-1, 0, 0),
@@ -207,13 +207,14 @@ class PickBananaTreeAction(rank: Int = 40) :
         )
         return spots
             .filter { !tileBlocked(it) }
-            .filter { GigosPath.canReach(actor, it) }
+            .filter { path.canReach(actor, it) }
             .minByOrNull { actor.location.getDistance(it) }
-            ?: spots.filter { GigosPath.canReach(actor, it) }
+            ?: spots.filter { path.canReach(actor, it) }
                 .minByOrNull { actor.location.getDistance(it) }
     }
 
     private fun nearestTree(actor: AmiliousMonkey): Location? {
+        val path = actor.brain.path
         val origin = actor.owner.location
         val z = origin.z
         var best: Location? = null
@@ -225,7 +226,7 @@ class PickBananaTreeAction(rank: Int = 40) :
                 val obj = RegionManager.getObject(loc) ?: continue
                 if (!isTree(obj.id, obj.name)) continue
                 val stand = standTile(actor, obj.location) ?: continue
-                if (!GigosPath.canReach(actor, stand)) continue
+                if (!path.canReach(actor, stand)) continue
                 val d = actor.location.getDistance(obj.location)
                 if (d < bestDist) {
                     bestDist = d
@@ -239,7 +240,8 @@ class PickBananaTreeAction(rank: Int = 40) :
     private fun isTree(id: Int, name: String): Boolean {
         if (id == 2078) return false
         if (id in PICKABLE) return true
-        return name.lowercase().contains("banana")
+        val n = name.lowercase()
+        return n.contains("banana") && n.contains("tree")
     }
 
     private fun tileBlocked(loc: Location): Boolean {

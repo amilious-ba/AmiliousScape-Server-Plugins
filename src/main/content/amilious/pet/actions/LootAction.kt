@@ -1,6 +1,5 @@
 package content.amilious.pet.actions
 
-import content.amilious.ai.GigosPath
 import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
@@ -30,6 +29,7 @@ class LootAction(rank: Int = 60) :
     }
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
+        if (!ready()) return false
         if (!actor.lootEnabled()) return false
         if (actor.hunger() < MonkeyConfig.HUNGER_LOOT) return false
         val item = nearest(actor)
@@ -47,29 +47,27 @@ class LootAction(rank: Int = 60) :
         wait = 0
         walkTicks = 0
         val dest = tile ?: return
-        if (!GigosPath.walk(actor, dest)) {
+        if (!actor.brain.path.walk(actor, dest)) {
             rest(8)
         }
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
-        val dest = tile ?: return false
+        val path = actor.brain.path
+        val dest = tile ?: return abort(actor, 8)
         when (phase) {
             Phase.WALK -> {
                 walkTicks++
-                if (GigosPath.arrived(actor, dest)) {
+                if (path.arrived(actor, dest)) {
+                    path.stop(actor)
                     nextPhase()
                     return true
                 }
-                if (GigosPath.stuck(walkTicks)) {
-                    rest(12)
-                    return false
+                if (path.reallyStuck(actor, dest) || path.stuck(walkTicks)) {
+                    return abort(actor, 12)
                 }
-                if (!actor.walkingQueue.isMoving) {
-                    if (!GigosPath.walk(actor, dest)) {
-                        rest(12)
-                        return false
-                    }
+                if (!path.walk(actor, dest)) {
+                    return abort(actor, 12)
                 }
                 return true
             }
@@ -84,6 +82,12 @@ class LootAction(rank: Int = 60) :
                 return wait > 0
             }
         }
+    }
+
+    private fun abort(actor: AmiliousMonkey, restTicks: Int): Boolean {
+        actor.brain.path.stop(actor)
+        rest(restTicks)
+        return false
     }
 
     private fun hasNearby(actor: AmiliousMonkey): Boolean =
@@ -101,7 +105,7 @@ class LootAction(rank: Int = 60) :
                 val itm = Item(it.id, it.amount)
                 actor.isBananaItem(itm) || actor.bag.hasSpaceFor(itm)
             }
-            .filter { GigosPath.canReach(actor, it.location) }
+            .filter { actor.brain.path.canReach(actor, it.location) }
             .minByOrNull { it.location.getDistance(actor.location) }
 
     private fun scoop(m: AmiliousMonkey, dest: Location) {

@@ -1,5 +1,8 @@
 package content.amilious.ai
 
+import content.amilious.ai.CompanionPath
+import core.game.node.entity.npc.NPC
+
 /**
  * The `CompanionBrain` class is responsible for managing and coordinating the behavior of a companion entity.
  * It provides mechanisms for registering, executing, and managing various actions that the companion can perform.
@@ -15,6 +18,8 @@ package content.amilious.ai
 class CompanionBrain<T>(private val actor: T) {
 
     //#region Private Variables ########################################################################################
+
+    val path = CompanionPath()
 
     /**
      * A list of actions that the companion can perform. Each action implements the [ICompanionAction]
@@ -62,6 +67,8 @@ class CompanionBrain<T>(private val actor: T) {
      * to handle stop signals appropriately.
      */
     private var stopWhenAble = false
+
+     private var stuckTicks = 0;
 
     //#endregion #######################################################################################################
 
@@ -180,6 +187,22 @@ class CompanionBrain<T>(private val actor: T) {
      */
     fun tick() {
         actions.forEach { it.cooldown(actor) }
+
+        val npc = actor as? NPC
+        if (npc != null) {
+            path.noteMove(npc)
+            val moving = npc.walkingQueue.isMoving || npc.pulseManager.hasPulseRunning()
+            if (!moving && current != null) stuckTicks++ else stuckTicks = 0
+            if (stuckTicks > 10) {
+                npc.walkingQueue.reset()
+                npc.pulseManager.clear()
+                path.resetStuck()
+                current = null
+                stopWhenAble = false
+                stuckTicks = 0
+            }
+        }
+
         val running = current
         if (running != null) {
             val keep = running.tick(actor)

@@ -1,6 +1,5 @@
 package content.amilious.pet.actions
 
-import content.amilious.ai.GigosPath
 import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.MonkeyConfig
@@ -32,37 +31,32 @@ class WanderAction(rank: Int = 10) :
         dest = pickDest(actor)
         val tile = dest ?: return
         if (actor.location.getDistance(tile) > 0.6) {
-            if (!GigosPath.walk(actor, tile)) {
+            if (!actor.brain.path.walk(actor, tile)) {
                 rest(8)
             }
         }
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
+        val path = actor.brain.path
         if (actor.ownerIdleTicks < 2) {
-            GigosPath.stop(actor)
-            return false
+            return abort(actor, 4)
         }
-        val tile = dest ?: return false
+        val tile = dest ?: return abort(actor, 8)
 
         when (phase) {
             Phase.WALK -> {
                 walkTicks++
-                if (GigosPath.arrived(actor, tile, 0.6)) {
+                if (path.arrived(actor, tile, 0.6)) {
+                    path.stop(actor)
                     nextPhase()
                     return true
                 }
-                if (GigosPath.stuck(walkTicks, 20)) {
-                    GigosPath.stop(actor)
-                    rest(8)
-                    return false
+                if (path.reallyStuck(actor, tile) || path.stuck(walkTicks, 20)) {
+                    return abort(actor, 8)
                 }
-                if (!actor.walkingQueue.isMoving) {
-                    if (!GigosPath.walk(actor, tile)) {
-                        GigosPath.stop(actor)
-                        rest(8)
-                        return false
-                    }
+                if (!path.walk(actor, tile)) {
+                    return abort(actor, 8)
                 }
                 return true
             }
@@ -78,7 +72,14 @@ class WanderAction(rank: Int = 10) :
         }
     }
 
+    private fun abort(actor: AmiliousMonkey, restTicks: Int): Boolean {
+        actor.brain.path.stop(actor)
+        rest(restTicks)
+        return false
+    }
+
     private fun pickDest(actor: AmiliousMonkey): Location? {
+        val path = actor.brain.path
         val origin = actor.owner.location
         for (i in 0 until 16) {
             var dx = 0
@@ -91,7 +92,7 @@ class WanderAction(rank: Int = 10) :
             if (blocked(tile)) continue
             if (origin.getDistance(tile) > MonkeyConfig.FOLLOW_DIST) continue
             if (actor.location.getDistance(tile) < 1.5) continue
-            if (!GigosPath.canReachExact(actor, tile)) continue
+            if (!path.canReachExact(actor, tile)) continue
             return tile
         }
         return null

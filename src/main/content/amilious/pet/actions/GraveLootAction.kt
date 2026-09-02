@@ -1,6 +1,5 @@
 package content.amilious.pet.actions
 
-import content.amilious.ai.GigosPath
 import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
@@ -32,29 +31,27 @@ class GraveLootAction(rank: Int = 110) :
         dest = GraveController.activeGraves[actor.owner.details.uid]?.location
         walkTicks = 0
         val tile = dest ?: return
-        if (!GigosPath.walk(actor, tile)) {
-            // keep going — tick may open a gate or hit the teleport failsafe
-        }
+        actor.brain.path.walk(actor, tile)
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
+        val path = actor.brain.path
         val tile = dest ?: return abort(actor, 8)
         when (phase) {
             Phase.WALK -> {
                 walkTicks++
-                if (GigosPath.arrived(actor, tile, 1.5)) {
+                if (path.arrived(actor, tile, 1.5)) {
+                    path.stop(actor)
                     nextPhase()
                     return true
                 }
-                if (GigosPath.stuck(walkTicks, 40)) {
-                    GigosPath.stop(actor)
+                if (path.reallyStuck(actor, tile) || path.stuck(walkTicks, 40)) {
+                    path.stop(actor)
                     actor.properties.teleportLocation = tile
                     nextPhase()
                     return true
                 }
-                if (!actor.walkingQueue.isMoving) {
-                    GigosPath.walk(actor, tile)
-                }
+                path.walk(actor, tile)
                 return true
             }
             Phase.SCOOP -> {
@@ -64,6 +61,13 @@ class GraveLootAction(rank: Int = 110) :
                     for (gi in grave.getItems()) {
                         if (gi.isRemoved) continue
                         val copy = Item(gi.id, gi.amount)
+                        if (actor.isBananaItem(copy)) {
+                            if (actor.addBananasNoted(copy.amount)) {
+                                GroundItemManager.destroy(gi)
+                                any = true
+                            }
+                            continue
+                        }
                         if (!actor.bag.hasSpaceFor(copy)) continue
                         if (actor.bag.add(copy)) {
                             GroundItemManager.destroy(gi)
@@ -83,7 +87,7 @@ class GraveLootAction(rank: Int = 110) :
     }
 
     private fun abort(actor: AmiliousMonkey, restTicks: Int): Boolean {
-        GigosPath.stop(actor)
+        actor.brain.path.stop(actor)
         rest(restTicks)
         return false
     }

@@ -15,7 +15,7 @@ class EatBananaAction(rank: Int = 30) :
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (!ready()) return false
         if (!actor.eatEnabled()) return false
-        if (actor.hunger() >= 30) return false
+        if (actor.hunger() >= MonkeyConfig.HUNGER_EAT_BELOW) return false
         return actor.hasBanana()
     }
 

@@ -13,6 +13,7 @@ class FollowIfFarAction(rank: Int = 100) :
         actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST
 
     override fun tick(actor: AmiliousMonkey): Boolean {
+        actor.brain.path.stop(actor)
         actor.properties.teleportLocation = actor.owner.location
         return false
     }

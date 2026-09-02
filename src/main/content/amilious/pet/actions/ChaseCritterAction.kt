@@ -1,6 +1,5 @@
 package content.amilious.pet.actions
 
-import content.amilious.ai.GigosPath
 import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.MonkeyConfig
@@ -36,7 +35,7 @@ class ChaseCritterAction(rank: Int = 10) :
         runTicks = 0
         val t = prey ?: return
         actor.face(t)
-        if (!GigosPath.walk(actor, t.location)) {
+        if (!actor.brain.path.walk(actor, t.location)) {
             prey = null
             rest(8)
         }
@@ -58,18 +57,18 @@ class ChaseCritterAction(rank: Int = 10) :
             Phase.RUN -> {
                 runTicks++
                 actor.face(t)
-                if (GigosPath.arrived(actor, t.location, 1.6)) {
-                    GigosPath.stop(actor)
+                val dest = t.location
+                if (actor.brain.path.arrived(actor, dest, 1.6)) {
+                    actor.brain.path.stop(actor)
                     nextPhase()
                     return true
                 }
-                if (GigosPath.stuck(runTicks, 24)) {
+                if (actor.brain.path.reallyStuck(actor, dest) || actor.brain.path.stuck(runTicks, 24)) {
                     return abort(actor, 12)
                 }
-                if (!actor.walkingQueue.isMoving) {
-                    if (!GigosPath.walk(actor, t.location)) {
-                        return abort(actor, 12)
-                    }
+                // prey moves — always retarget, not only when the queue is empty
+                if (!actor.brain.path.walk(actor, dest)) {
+                    return abort(actor, 12)
                 }
                 return true
             }
@@ -89,7 +88,7 @@ class ChaseCritterAction(rank: Int = 10) :
     }
 
     private fun abort(actor: AmiliousMonkey, restTicks: Int): Boolean {
-        GigosPath.stop(actor)
+        actor.brain.path.stop(actor)
         prey = null
         rest(restTicks)
         return false
@@ -98,7 +97,7 @@ class ChaseCritterAction(rank: Int = 10) :
     private fun findPrey(actor: AmiliousMonkey): NPC? =
         Repository.npcs
             .filter { isPrey(actor, it) }
-            .filter { GigosPath.canReach(actor, it.location) }
+            .filter { actor.brain.path.canReach(actor, it.location) }
             .minByOrNull { actor.location.getDistance(it.location) }
 
     private fun isPrey(actor: AmiliousMonkey, npc: NPC): Boolean {

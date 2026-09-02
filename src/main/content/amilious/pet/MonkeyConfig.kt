@@ -20,6 +20,7 @@ object MonkeyConfig {
     const val HUNGER_B2B = 5        //hunger cost for converting bones to bananas
     const val HUNGER_PICK = 2       //hunger cost for picking bananas
     const val HUNGER_FEED = 4       //hunger cost for feeding owner
+    const val HUNGER_EAT_BELOW = 30   // auto-eat only when hunger is under this
     const val UNBURDEN_FREE = 4     //start taking when you have this many empty slots or fewer
     const val DRUNK_BEER = 50
 

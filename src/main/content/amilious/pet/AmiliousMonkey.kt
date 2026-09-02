@@ -28,6 +28,7 @@ import core.game.node.entity.npc.NPC
 import core.game.node.entity.player.Player
 import core.game.node.item.GroundItem
 import core.game.node.item.Item
+import core.game.world.map.Location
 import core.game.world.repository.Repository
 import core.game.world.update.flag.context.Animation
 
@@ -44,8 +45,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     private var lastHudAction = ""
     private var lastHudPhase = ""
 
-    private val brain = CompanionBrain(this)
-
+    public val brain = CompanionBrain(this)
     fun displayName(): String = MonkeyConfig.skinFor(owner).name
 
     init {
@@ -374,6 +374,9 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         if (gi.dropper == owner) return true
         return false
     }
+
+    fun walkTo(dest: Location, dist: Double = 1.5): Boolean =
+        brain.path.walk(this, dest, dist)
 
     fun canTake(gi: GroundItem): Boolean {
         if (gi.isRemoved) return false

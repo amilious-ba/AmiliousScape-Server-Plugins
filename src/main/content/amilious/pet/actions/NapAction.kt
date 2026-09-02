@@ -58,8 +58,10 @@ class NapAction(rank: Int = 10) :
             }
             Phase.WAKE -> {
                 wakeTicks++
-                if (wakeTicks < 4) return true
-                finishStand(actor)
+                if (wakeTicks == 1) {
+                    finishStand(actor)
+                }
+                if (wakeTicks < 10) return true
                 rest(20)
                 return false
             }
@@ -77,13 +79,10 @@ class NapAction(rank: Int = 10) :
         actor.graphics(Graphics(-1))
         if (skin.sleep > 0 && skin.wake > 0) {
             actor.animator.forceAnimation(Animation(skin.wake))
-            wakeTicks = 0
-            phase = Phase.WAKE
-            return true
         }
-        finishStand(actor)
-        rest(20)
-        return false
+        wakeTicks = 0
+        phase = Phase.WAKE
+        return true
     }
 
     private fun finishStand(actor: AmiliousMonkey) {

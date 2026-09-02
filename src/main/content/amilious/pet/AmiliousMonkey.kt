@@ -312,9 +312,9 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
             return
         }
         tickDrunk()
+        snapIfTeleported()
         noteOwnerIdle()
         tickCombatIdle()
-        noteOwnerTeleport()
         brain.tick()
         val name = brain.getCurrentActionName()
         val phase = brain.getCurrentActionPhaseName()
@@ -323,6 +323,17 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
             lastHudPhase = phase
             GigosHudPacket.send(owner, this)
         }
+    }
+
+    private fun snapIfTeleported() {
+        val here = owner.location
+        val far = location.getDistance(here) > 16.0 || location.z != here.z
+        if (!far) return
+        brain.interrupt()
+        val land = here.transform(1, 0, 0)
+        location = land
+        properties.teleportLocation = land
+        refreshPose()
     }
 
     private fun noteOwnerTeleport() {

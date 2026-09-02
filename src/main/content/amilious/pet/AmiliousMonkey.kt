@@ -106,6 +106,15 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         walkingQueue.reset()
         pulseManager.clear()
         animator.forceAnimation(Animation(-1))
+        val skin = MonkeyConfig.skinFor(owner)
+        val other = if (skin.id == 132) 4344 else 132
+        try {
+            transform(other)
+            transform(skin.id)
+        } catch (_: Exception) {
+            id = skin.id
+            definition = core.cache.def.impl.NPCDefinition.forId(skin.id)
+        }
         applyModel()
         properties.teleportLocation = here
         bindOptions()

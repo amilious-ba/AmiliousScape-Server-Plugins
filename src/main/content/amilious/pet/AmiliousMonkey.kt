@@ -312,7 +312,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
             return
         }
         tickDrunk()
-        snapIfTeleported()
+        //snapIfTeleported()
         noteOwnerIdle()
         tickCombatIdle()
         brain.tick()

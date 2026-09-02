@@ -228,6 +228,7 @@ class CompanionBrain<T>(private val actor: T) {
     }
 
     private fun release(npc: NPC) {
+        current?.stop(actor)
         path.stop(npc)
         npc.pulseManager.clear()
         npc.walkingQueue.reset()

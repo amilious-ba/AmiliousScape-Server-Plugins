@@ -75,4 +75,6 @@ interface ICompanionAction<T> {
      */
     fun cooldown(actor: T) {}
 
+    fun stop(actor: T) {}
+
 }

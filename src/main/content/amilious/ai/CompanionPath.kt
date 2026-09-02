@@ -17,6 +17,8 @@ class CompanionPath {
     private var stillTicks = 0
     private var openWait = 0
     private var lastDoor: Location? = null
+    private var ignoreDoor: Location? = null
+    private var ignoreTicks = 0
 
     data class Route(val path: Path, val end: Location) {
         fun exact(dest: Location) = end.getDistance(dest) <= 1.0
@@ -57,6 +59,8 @@ class CompanionPath {
     }
 
     fun walk(actor: NPC, dest: Location, dist: Double = 1.5): Boolean {
+        if (ignoreTicks > 0) ignoreTicks-- else ignoreDoor = null
+
         if (arrived(actor, dest, dist)) {
             stopPath(actor)
             return true
@@ -65,18 +69,26 @@ class CompanionPath {
         if (openWait > 0) {
             openWait--
             val door = lastDoor
-            if (openWait == 0 && door != null && actor.location.getDistance(door) <= 1.0) {
-                val through = throughFrom(actor.location, door, dest)
-                actor.properties.teleportLocation = through
+            if (openWait == 0 && door != null) {
+                if (actor.location.getDistance(door) <= 1.0) {
+                    actor.properties.teleportLocation = throughFrom(actor.location, door, dest)
+                }
+                ignore(door)
                 lastDoor = null
                 resetStuck()
             }
             return true
         }
 
+        val path = Pathfinder.find(actor, dest, true, Pathfinder.SMART)
+        if (path.isSuccessful || path.isMoveNear) {
+            actor.walkingQueue.reset()
+            path.walk(actor)
+            return true
+        }
+
         val gate = findGate(actor, dest)
-        if (gate != null && isBetween(actor.location, gate.location, dest)) {
-            val through = throughFrom(actor.location, gate.location, dest)
+        if (gate != null && !alreadyPast(actor, gate.location, dest) && !ignored(gate.location)) {
             if (isClosed(gate)) {
                 if (actor.location.getDistance(gate.location) <= 1.5) {
                     if (!openGate(actor, gate)) return false
@@ -86,15 +98,9 @@ class CompanionPath {
                 }
                 return walkNear(actor, standTile(actor, gate))
             }
-            return walkNear(actor, through)
+            return walkNear(actor, throughFrom(actor.location, gate.location, dest))
         }
 
-        val path = Pathfinder.find(actor, dest, true, Pathfinder.SMART)
-        if (path.isSuccessful || path.isMoveNear) {
-            actor.walkingQueue.reset()
-            path.walk(actor)
-            return true
-        }
         return false
     }
 
@@ -125,8 +131,10 @@ class CompanionPath {
         for (dx in -GATE_SCAN..GATE_SCAN) {
             for (dy in -GATE_SCAN..GATE_SCAN) {
                 val loc = Location.create(ax + dx, ay + dy, z)
+                if (ignored(loc)) continue
                 val obj = RegionManager.getObject(loc) ?: continue
                 if (!isGate(obj)) continue
+                if (alreadyPast(actor, loc, dest)) continue
                 if (!isBetween(actor.location, loc, dest)) continue
                 val score = loc.getDistance(actor.location) + loc.getDistance(dest) * 0.25
                 if (score < bestScore) {
@@ -144,6 +152,19 @@ class CompanionPath {
         lastY = Int.MIN_VALUE
     }
 
+    private fun ignore(loc: Location) {
+        ignoreDoor = loc
+        ignoreTicks = 25
+    }
+
+    private fun ignored(loc: Location): Boolean {
+        val d = ignoreDoor ?: return false
+        return ignoreTicks > 0 && d.x == loc.x && d.y == loc.y && d.z == loc.z
+    }
+
+    private fun alreadyPast(actor: NPC, gate: Location, dest: Location): Boolean =
+        actor.location.getDistance(dest) + 0.5 < gate.getDistance(dest)
+
     private fun walkNear(actor: NPC, dest: Location): Boolean {
         val p = Pathfinder.find(actor, dest, true, Pathfinder.SMART)
         if (!p.isSuccessful && !p.isMoveNear) return false
@@ -152,7 +173,6 @@ class CompanionPath {
         return true
     }
 
-    /** Tile next to the gate on our side — never the hinge tile. */
     private fun standTile(actor: NPC, gate: Scenery): Location {
         val g = gate.location
         val a = actor.location
@@ -169,7 +189,6 @@ class CompanionPath {
         return Location.create(g.x + sx, g.y + sy, g.z)
     }
 
-    /** One tile on the dest side of the gate. */
     private fun throughFrom(from: Location, gate: Location, dest: Location): Location {
         val dx = when {
             dest.x > gate.x -> 1
@@ -194,7 +213,7 @@ class CompanionPath {
     private fun isBetween(from: Location, mid: Location, dest: Location): Boolean {
         val direct = from.getDistance(dest)
         val via = from.getDistance(mid) + mid.getDistance(dest)
-        return via <= direct + 3.0
+        return via <= direct + 1.5
     }
 
     private fun lastPoint(path: Path): Point? {
@@ -230,5 +249,4 @@ class CompanionPath {
             false
         }
     }
-
 }

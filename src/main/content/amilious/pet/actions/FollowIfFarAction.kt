@@ -14,7 +14,12 @@ class FollowIfFarAction(rank: Int = 100) :
 
     override fun tick(actor: AmiliousMonkey): Boolean {
         actor.brain.path.stop(actor)
-        actor.properties.teleportLocation = actor.owner.location
+        actor.pulseManager.clear()
+        actor.walkingQueue.reset()
+        val land = actor.owner.location.transform(1, 0, 0)
+        actor.location = land
+        actor.properties.teleportLocation = land
+        actor.refreshPose()
         return false
     }
 }

@@ -30,6 +30,7 @@ class NapAction(rank: Int = 10) :
         super.start(actor)
         slept = 0
         wakeTicks = 0
+        actor.brain.path.stop(actor)
         actor.pulseManager.clear()
         actor.walkingQueue.reset()
         val lie = lieAnim(actor)

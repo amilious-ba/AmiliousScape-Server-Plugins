@@ -19,19 +19,24 @@ class CompanionPath {
     private var lastDoor: Location? = null
     private var ignoreDoor: Location? = null
     private var ignoreTicks = 0
+    private var dest: Location? = null
 
     data class Route(val path: Path, val end: Location) {
         fun exact(dest: Location) = end.getDistance(dest) <= 1.0
     }
 
+    fun hasTarget(): Boolean = dest != null
+
     fun arrived(actor: NPC, dest: Location, dist: Double = 1.5): Boolean =
         actor.location.getDistance(dest) <= dist
 
     fun stop(actor: NPC) {
+        dest = null
         openWait = 0
         lastDoor = null
         actor.pulseManager.clear()
         actor.walkingQueue.reset()
+        resetStuck()
     }
 
     fun takeOver(actor: NPC) = stop(actor)
@@ -57,9 +62,11 @@ class CompanionPath {
     }
 
     fun walk(actor: NPC, dest: Location, dist: Double = 1.5): Boolean {
+        this.dest = dest
         if (ignoreTicks > 0) ignoreTicks-- else ignoreDoor = null
 
         if (arrived(actor, dest, dist)) {
+            this.dest = null
             stopPath(actor)
             return true
         }

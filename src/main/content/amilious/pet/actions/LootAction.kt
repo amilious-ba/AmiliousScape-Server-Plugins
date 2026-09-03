@@ -93,13 +93,19 @@ class LootAction(rank: Int = 60) :
     private fun hasNearby(actor: AmiliousMonkey): Boolean =
         GroundItemManager.getItems().any {
             !it.isRemoved &&
-                    it.location.getDistance(actor.location) <= MonkeyConfig.LOOT_RANGE &&
+                    inRange(actor, it.location) &&
                     actor.canTake(it)
         }
 
+    private fun inRange(actor: AmiliousMonkey, loc: core.game.world.map.Location): Boolean {
+        val range = MonkeyConfig.LOOT_RANGE
+        return loc.getDistance(actor.location) <= range ||
+                loc.getDistance(actor.owner.location) <= range
+    }
+
     private fun nearest(actor: AmiliousMonkey): GroundItem? =
         GroundItemManager.getItems()
-            .filter { !it.isRemoved && it.location.getDistance(actor.location) <= MonkeyConfig.LOOT_RANGE }
+            .filter { !it.isRemoved && inRange(actor, it.location) }
             .filter { actor.canTake(it) }
             .filter {
                 val itm = Item(it.id, it.amount)

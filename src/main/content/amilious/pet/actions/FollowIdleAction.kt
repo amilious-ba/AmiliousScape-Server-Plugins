@@ -4,7 +4,7 @@ import content.amilious.ai.SimpleCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.MonkeyConfig
 
-class FollowIdleAction(rank: Int = 20) :
+class FollowIdleAction(rank: Int = 10) :
     SimpleCompanionAction<AmiliousMonkey>("follow", rank) {
 
     override fun getPhaseName() = "follow"
@@ -14,24 +14,25 @@ class FollowIdleAction(rank: Int = 20) :
         return dist > 1.5 && dist <= MonkeyConfig.FOLLOW_DIST
     }
 
-    override fun tick(actor: AmiliousMonkey): Boolean {
-        val path = actor.brain.path
-        val dest = actor.owner.location
-        val dist = actor.location.getDistance(dest)
+    override fun start(actor: AmiliousMonkey) {
+        super.start(actor)
+        actor.followOwner()
+    }
 
+    override fun tick(actor: AmiliousMonkey): Boolean {
+        val dist = actor.location.getDistance(actor.owner.location)
         if (dist > MonkeyConfig.FOLLOW_DIST) {
-            path.stop(actor)
+            actor.brain.path.stop(actor)
+            actor.pulseManager.clear()
             return false
         }
         if (dist <= 1.5) {
-            path.stop(actor)
+            actor.brain.path.stop(actor)
+            actor.pulseManager.clear()
             return false
         }
-
-        if (!path.walk(actor, dest)) {
-            if (!actor.pulseManager.hasPulseRunning()) {
-                actor.followOwner()
-            }
+        if (!actor.pulseManager.hasPulseRunning() && !actor.walkingQueue.isMoving) {
+            actor.followOwner()
         }
         return true
     }

@@ -7,7 +7,7 @@ import content.amilious.pet.MonkeyConfig
 import core.api.playAudio
 import core.api.sendMessage
 
-class SnackUntilFullAction(rank: Int = 10) :
+class SnackUntilFullAction(rank: Int = 0) :
     SimpleCompanionAction<AmiliousMonkey>("snack", rank) {
 
     override fun priorityWeight(): Int = 2

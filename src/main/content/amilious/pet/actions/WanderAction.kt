@@ -6,7 +6,7 @@ import content.amilious.pet.MonkeyConfig
 import core.game.world.map.Location
 import kotlin.random.Random
 
-class WanderAction(rank: Int = 10) :
+class WanderAction(rank: Int = 0) :
     PhasedCompanionAction<AmiliousMonkey, WanderAction.Phase>(
         "wander", rank, Phase::class
     ) {

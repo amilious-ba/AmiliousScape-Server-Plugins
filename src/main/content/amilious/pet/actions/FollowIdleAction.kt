@@ -4,7 +4,7 @@ import content.amilious.ai.SimpleCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.MonkeyConfig
 
-class FollowIdleAction(rank: Int = 0) :
+class FollowIdleAction(rank: Int = 20) :
     SimpleCompanionAction<AmiliousMonkey>("follow", rank) {
 
     override fun getPhaseName() = "follow"
@@ -18,24 +18,21 @@ class FollowIdleAction(rank: Int = 0) :
         val path = actor.brain.path
         val dest = actor.owner.location
         val dist = actor.location.getDistance(dest)
-        if (dist > MonkeyConfig.FOLLOW_DIST) return false
+
+        if (dist > MonkeyConfig.FOLLOW_DIST) {
+            path.stop(actor)
+            return false
+        }
         if (dist <= 1.5) {
             path.stop(actor)
             return false
         }
 
-        if (!path.canReachExact(actor, dest)) {
-            if (path.reallyStuck(actor, dest)) {
-                path.stop(actor)
-                return false
+        if (!path.walk(actor, dest)) {
+            if (!actor.pulseManager.hasPulseRunning()) {
+                actor.followOwner()
             }
-            path.walk(actor, dest)
-            return false
         }
-
-        if (!actor.pulseManager.hasPulseRunning()) {
-            actor.followOwner()
-        }
-        return false
+        return true
     }
 }

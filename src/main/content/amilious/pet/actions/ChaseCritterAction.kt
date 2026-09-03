@@ -9,7 +9,7 @@ import core.game.world.repository.Repository
 import core.game.world.update.flag.context.Animation
 import kotlin.random.Random
 
-class ChaseCritterAction(rank: Int = 10) :
+class ChaseCritterAction(rank: Int = 0) :
     PhasedCompanionAction<AmiliousMonkey, ChaseCritterAction.Phase>(
         "chase", rank, Phase::class
     ) {

@@ -6,7 +6,7 @@ import content.amilious.pet.MonkeyConfig
 import core.game.world.update.flag.context.Animation
 import core.game.world.update.flag.context.Graphics
 
-class NapAction(rank: Int = 10) :
+class NapAction(rank: Int = 0) :
     PhasedCompanionAction<AmiliousMonkey, NapAction.Phase>(
         "nap", rank, Phase::class
     ) {

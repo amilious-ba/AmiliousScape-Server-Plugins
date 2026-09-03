@@ -325,6 +325,16 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         }
     }
 
+    fun snapToOwner() {
+        brain.interrupt()
+        brain.path.takeOver(this)
+        clear()
+        location = owner.location.transform(1, 0, 0)
+        init()
+        applyModel()
+        owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
+    }
+
     private fun snapIfTeleported() {
         val here = owner.location
         val far = location.getDistance(here) > 16.0 || location.z != here.z

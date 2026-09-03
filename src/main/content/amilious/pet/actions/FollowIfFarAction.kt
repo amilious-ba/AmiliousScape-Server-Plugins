@@ -9,17 +9,15 @@ class FollowIfFarAction(rank: Int = 100) :
 
     override fun getPhaseName() = "teleport"
 
-    override fun canStart(actor: AmiliousMonkey): Boolean =
-        actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST
+    override fun canStart(actor: AmiliousMonkey): Boolean {
+        if (!ready()) return false
+        if (actor.location.z != actor.owner.location.z) return true
+        return actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST
+    }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
-        actor.brain.path.stop(actor)
-        actor.pulseManager.clear()
-        actor.walkingQueue.reset()
-        val land = actor.owner.location.transform(1, 0, 0)
-        actor.location = land
-        actor.properties.teleportLocation = land
-        actor.refreshPose()
+        actor.snapToOwner()
+        rest(8)
         return false
     }
 }

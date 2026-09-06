@@ -6,9 +6,6 @@ object MonkeyConfig {
     val OWNERS = setOf("wolfy")
 
     //Monkey config
-    const val NPC_DARK = 132
-    const val NPC_LIGHT = 4344
-    //const val NPC_ID = 132          //the npc that is spawned
     const val BOB_SIZE = 30         //the inventory size of pet
     const val FOLLOW_DIST = 12      //the distance the pet will follow the player
     const val LOOT_RANGE = 6        //the distance the pet will loot from the player

@@ -29,9 +29,12 @@ import core.game.node.entity.npc.NPC
 import core.game.node.entity.player.Player
 import core.game.node.item.GroundItem
 import core.game.node.item.Item
+import core.game.system.task.Pulse
+import core.game.world.GameWorld
 import core.game.world.map.Location
 import core.game.world.repository.Repository
 import core.game.world.update.flag.context.Animation
+import core.game.world.update.flag.context.Graphics
 
 class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : NPC(id) {
 
@@ -165,8 +168,9 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         applyModel()
         loadBag()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
-        sendMessage(owner, "Gigos hops down beside you.")
+        graphics(Graphics(MonkeyConfig.GFX_TELE, MonkeyConfig.GFX_TELE_HEIGHT))
         playAudio(owner, MonkeyConfig.SFX_PLAYFUL)
+        sendMessage(owner, "Gigos hops down beside you.")
         followOwner()
     }
 
@@ -298,14 +302,23 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     }
 
     fun dismiss() {
+        if (owner.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null) !== this) {
+            return
+        }
         brain.interrupt()
         saveBag()
         NpcMenuPacket.clear(owner, this)
+        graphics(Graphics(MonkeyConfig.GFX_TELE, MonkeyConfig.GFX_TELE_HEIGHT))
+        playAudio(owner, MonkeyConfig.SFX_PLAYFUL)
+        sendMessage(owner, "Gigos vanishes. His pack is safe. ::monkey to call him back.")
         owner.removeAttribute(MonkeyConfig.ATTR_ACTIVE)
         GigosHudPacket.hide(owner)
-        playAudio(owner, MonkeyConfig.SFX_PLAYFUL)
-        clear()
-        sendMessage(owner, "Gigos scurries off. His pack is safe. ::monkey to call him back.")
+        GameWorld.Pulser.submit(object : Pulse(1) {
+            override fun pulse(): Boolean {
+                clear()
+                return true
+            }
+        })
     }
 
     fun noteOwnerIdle() {

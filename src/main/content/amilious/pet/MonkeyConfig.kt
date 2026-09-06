@@ -34,7 +34,7 @@ object MonkeyConfig {
     const val EGG_ID = 1944
 
     const val GFX_TELE = 308
-    const val GFX_TELE_HEIGHT = 92
+    const val GFX_TELE_HEIGHT = 0
 
     //Item Ids
     const val BANANA_ID = 1963      //the id of the banana item

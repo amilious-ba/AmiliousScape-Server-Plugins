@@ -19,6 +19,7 @@ import content.amilious.pet.actions.ThrowDungAction
 import content.amilious.pet.actions.UnburdenAction
 import content.amilious.pet.actions.WanderAction
 import core.api.playAudio
+import core.api.sendGraphics
 import core.api.sendMessage
 import core.game.component.Component
 import core.game.container.Container
@@ -168,8 +169,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         applyModel()
         loadBag()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
-        graphics(Graphics(MonkeyConfig.GFX_TELE, MonkeyConfig.GFX_TELE_HEIGHT))
-        playAudio(owner, MonkeyConfig.SFX_PLAYFUL)
+        poofHere()
         sendMessage(owner, "Gigos hops down beside you.")
         followOwner()
     }
@@ -301,6 +301,11 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         return moved
     }
 
+    private fun poofHere() {
+        sendGraphics(MonkeyConfig.GFX_TELE, location)
+        playAudio(owner, MonkeyConfig.SFX_PLAYFUL)
+    }
+
     fun dismiss() {
         if (owner.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null) !== this) {
             return
@@ -308,12 +313,11 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         brain.interrupt()
         saveBag()
         NpcMenuPacket.clear(owner, this)
-        graphics(Graphics(MonkeyConfig.GFX_TELE, MonkeyConfig.GFX_TELE_HEIGHT))
-        playAudio(owner, MonkeyConfig.SFX_PLAYFUL)
+        poofHere()
         sendMessage(owner, "Gigos vanishes. His pack is safe. ::monkey to call him back.")
         owner.removeAttribute(MonkeyConfig.ATTR_ACTIVE)
         GigosHudPacket.hide(owner)
-        GameWorld.Pulser.submit(object : Pulse(1) {
+        GameWorld.Pulser.submit(object : Pulse(3) {
             override fun pulse(): Boolean {
                 clear()
                 return true

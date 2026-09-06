@@ -33,8 +33,7 @@ class FollowIdleAction(rank: Int = 10) :
             stopFollow(actor)
             return false
         }
-
-        if (dist <= 1.5 && actor.ownerIdleTicks >= STOP_IDLE) {
+        if (dist <= 1.5) {
             stopFollow(actor)
             return false
         }
@@ -54,13 +53,8 @@ class FollowIdleAction(rank: Int = 10) :
             return false
         }
 
-        if (dist > 1.5) {
-            if (!actor.pulseManager.hasPulseRunning() && !actor.walkingQueue.isMoving) {
-                actor.followOwner()
-            }
-        } else {
-            actor.brain.path.stop(actor)
-            actor.pulseManager.clear()
+        if (!actor.pulseManager.hasPulseRunning() && !actor.walkingQueue.isMoving) {
+            actor.followOwner()
         }
         return true
     }
@@ -75,9 +69,5 @@ class FollowIdleAction(rank: Int = 10) :
         actor.brain.path.stop(actor)
         actor.pulseManager.clear()
         still = 0
-    }
-
-    companion object {
-        private const val STOP_IDLE = 16
     }
 }

@@ -33,8 +33,7 @@ object MonkeyConfig {
     const val SFX_DUCK = 413
     const val EGG_ID = 1944
 
-    const val GFX_TELE = 392
-    const val GFX_TELE_HEIGHT = 0
+    const val GFX_TELE = 308
 
     //Item Ids
     const val BANANA_ID = 1963      //the id of the banana item
@@ -44,7 +43,7 @@ object MonkeyConfig {
     const val SFX_PLAYFUL = 633   // summon / dismiss
     const val SFX_OOK = 630       // throw, pick, eat, drunk
     const val SFX_SMALL = 634     // loot, unburden, empty
-
+    const val SFX_TELEPORT = 196
 
     //Attributes
     const val ATTR_DRUNK = "amilious_gigos_drunk" // ticks remaining, not saved

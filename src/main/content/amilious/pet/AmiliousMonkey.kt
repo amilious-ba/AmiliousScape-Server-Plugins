@@ -303,6 +303,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
 
     private fun poofHere() {
         sendGraphics(MonkeyConfig.GFX_TELE, location)
+        playAudio(owner, MonkeyConfig.SFX_TELEPORT)
         playAudio(owner, MonkeyConfig.SFX_PLAYFUL)
     }
 

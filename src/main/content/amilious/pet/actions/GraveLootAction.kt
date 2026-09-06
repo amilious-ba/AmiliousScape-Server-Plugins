@@ -3,6 +3,8 @@ package content.amilious.pet.actions
 import content.amilious.ai.PhasedCompanionAction
 import content.amilious.pet.AmiliousMonkey
 import content.amilious.pet.GigosHudPacket
+import content.amilious.pet.MonkeyConfig
+import core.api.sendGraphics
 import core.api.sendMessage
 import core.game.node.entity.combat.graves.GraveController
 import core.game.node.item.GroundItemManager
@@ -47,7 +49,9 @@ class GraveLootAction(rank: Int = 110) :
                 }
                 if (path.reallyStuck(actor, tile) || path.stuck(walkTicks, 40)) {
                     path.stop(actor)
+                    sendGraphics(MonkeyConfig.GFX_TELE, actor.location)
                     actor.properties.teleportLocation = tile
+                    sendGraphics(MonkeyConfig.GFX_TELE, tile)
                     nextPhase()
                     return true
                 }

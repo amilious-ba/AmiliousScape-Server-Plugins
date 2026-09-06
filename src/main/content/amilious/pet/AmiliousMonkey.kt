@@ -349,7 +349,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
             return
         }
         tickDrunk()
-        //snapIfTeleported()
+        snapIfTeleported()
         noteOwnerIdle()
         tickCombatIdle()
         brain.tick()
@@ -363,24 +363,23 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     }
 
     fun snapToOwner() {
+        val from = location
+        sendGraphics(MonkeyConfig.GFX_TELE, from)
         brain.interrupt()
         brain.path.takeOver(this)
-        clear()
-        location = owner.location.transform(1, 0, 0)
-        init()
-        applyModel()
+        val land = owner.location.transform(1, 0, 0)
+        location = land
+        properties.teleportLocation = land
+        refreshPose()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
+        poofHere()
     }
 
     private fun snapIfTeleported() {
         val here = owner.location
         val far = location.getDistance(here) > 16.0 || location.z != here.z
         if (!far) return
-        brain.interrupt()
-        val land = here.transform(1, 0, 0)
-        location = land
-        properties.teleportLocation = land
-        refreshPose()
+        snapToOwner()
     }
 
     private fun noteOwnerTeleport() {

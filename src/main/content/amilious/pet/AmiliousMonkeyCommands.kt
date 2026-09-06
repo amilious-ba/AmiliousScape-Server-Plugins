@@ -31,6 +31,14 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
             live!!.openBagUi()
         }
 
+        define("gigosbank", Privilege.STANDARD, "::gigosbank", "Send Gigos to bank his pack.") { player, _ ->
+            val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+            if (live == null) {
+                reject(player, "Gigos is not out.")
+            }
+            live!!.orderBank()
+        }
+
         define("monkeytake", Privilege.STANDARD, "::monkeytake", "Take everything from Gigos.") { player, _ ->
             val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
             if (live == null) {
@@ -151,6 +159,17 @@ class AmiliousMonkeyCommands : CommandSet(Privilege.STANDARD) {
                     setAttribute(player, MonkeyConfig.ATTR_GRAVE, !on)
                     GigosHudPacket.send(player, live!!)
                     notify(player, if (!on) "Gigos will loot your grave." else "Gigos will leave your grave.")
+                }
+                12 -> {
+                    if (live == null) reject(player, "Gigos is not out.")
+                    val on = player.getAttribute(MonkeyConfig.ATTR_BANK, false)
+                    setAttribute(player, MonkeyConfig.ATTR_BANK, !on)
+                    GigosHudPacket.send(player, live!!)
+                    notify(player, if (!on) "Gigos will bank when his pack is full." else "Gigos will only bank when told.")
+                }
+                13 -> {
+                    if (live == null) reject(player, "Gigos is not out.")
+                    live!!.orderBank()
                 }
                 else -> reject(player, "Unknown monkey action.")
             }

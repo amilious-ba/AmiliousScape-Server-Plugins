@@ -2,6 +2,7 @@ package content.amilious.pet
 
 
 import content.amilious.ai.CompanionBrain
+import content.amilious.pet.actions.BankRunAction
 import content.amilious.pet.actions.BonesToBananasAction
 import content.amilious.pet.actions.ChaseCritterAction
 import content.amilious.pet.actions.EatBananaAction
@@ -53,6 +54,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
             .addAction(GraveLootAction())
             .addAction(FollowIfFarAction())
             .addAction(FeedOwnerAction())
+            .addAction(BankRunAction())
             .addAction(UnburdenAction())
             .addAction(PickBananaTreeAction())
             .addAction(EatBananaAction())
@@ -91,13 +93,15 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     fun b2bEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_B2B, true)
     fun lootEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_LOOT, true)
     fun feedEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_FEED, true)
+    fun bankEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_BANK, false)
 
     fun bindOptions() {
         interaction.set(Option("Pack", 0))
         interaction.set(Option("Talk-to", 1))
         interaction.set(Option("Pet", 2))
         interaction.set(Option("Empty", 3))
-        interaction.set(Option("Dismiss", 4))
+        interaction.set(Option("Bank", 4))
+        interaction.set(Option("Dismiss", 5))
         refreshMenu()
     }
 
@@ -170,6 +174,20 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
 
     fun brainStop() = brain.requestStop()
 
+    fun orderBank(): Boolean {
+        if (brain.getCurrentActionName() == "grave") {
+            sendMessage(owner, "Gigos is busy at your grave.")
+            return false
+        }
+        val ok = brain.force("bank", "grave")
+        if (ok) {
+            GigosHudPacket.send(owner, this)
+        } else {
+            sendMessage(owner, "Gigos cannot leave for the bank right now.")
+        }
+        return ok
+    }
+
     fun brainDebug() = brain.debugLines()
 
     fun brainActionName(): String = brain.getCurrentActionName()
@@ -216,7 +234,8 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
             1 to "Talk-to",
             2 to "Pet",
             3 to "Empty",
-            4 to "Dismiss"
+            4 to "Bank",
+            5 to "Dismiss"
         )
         GigosHudPacket.send(owner, this)
     }
@@ -460,6 +479,11 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         }
         return n
     }
+
+    fun hasBankableItems(): Boolean =
+        bag.toArray().any { it != null && !isBananaItem(it) }
+
+    fun bagIsFull(): Boolean = bag.freeSlots() <= 0
 
 
 }

@@ -23,6 +23,9 @@ object MonkeyConfig {
     const val HUNGER_EAT_BELOW = 30   // auto-eat only when hunger is under this
     const val UNBURDEN_FREE = 4     //start taking when you have this many empty slots or fewer
     const val DRUNK_BEER = 50
+    const val HUNGER_BANK = 4
+    const val BANK_GONE_TICKS = 10
+    const val BANK_AUTO_REST = 40
 
     const val FEATHER_ID = 314
     const val HUNGER_PLUCK = 1
@@ -55,6 +58,7 @@ object MonkeyConfig {
     const val ATTR_UNBURDEN = "/save:amilious_monkey_unburden"
     const val ATTR_GRAVE = "/save:amilious_grave"
     const val ATTR_MODEL = "/save:amilious_monkey_model"
+    const val ATTR_BANK = "/save:amilious_monkey_bank"
 
     data class MonkeySkin(
         val id: Int,

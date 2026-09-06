@@ -61,6 +61,7 @@ object GigosHudPacket {
         val pickOn = player.getAttribute(MonkeyConfig.ATTR_PICK, true)
         val unburdenOn = player.getAttribute(MonkeyConfig.ATTR_UNBURDEN, true)
         val graveOn = player.getAttribute(MonkeyConfig.ATTR_GRAVE, true)
+        val bankOn = player.getAttribute(MonkeyConfig.ATTR_BANK, false)
 
         val buf = IoBuffer(OPCODE, PacketHeader.BYTE)
         buf.p1(2)
@@ -75,7 +76,7 @@ object GigosHudPacket {
         buf.p1(if (monkey.brainBusy()) 1 else 0)
         buf.p1(if (monkey.isDrunk()) 1 else 0)
         buf.p2(monkey.drunkTicks().coerceIn(0, 65535))
-        buf.p1(8)
+        buf.p1(9)
         buf.p1(2)
         buf.p1(if (lootOn) 1 else 0)
         buf.putString("Autoloot")
@@ -100,6 +101,9 @@ object GigosHudPacket {
         buf.p1(11) // client button id — match ::gigosop
         buf.p1(if (graveOn) 1 else 0)
         buf.putString("Loot-Grave")
+        buf.p1(12)
+        buf.p1(if (bankOn) 1 else 0)
+        buf.putString("Auto-bank")
         player.session.write(buf)
     }
 

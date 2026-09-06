@@ -47,6 +47,37 @@ class CompanionBrain<T>(private val actor: T) {
         finishCurrent()
     }
 
+    fun find(name: String): ICompanionAction<T>? =
+        actions.firstOrNull { it.name().equals(name, ignoreCase = true) }
+
+    /** Polite start. Fails if missing or canStart is false. */
+    fun request(name: String): Boolean {
+        val action = find(name) ?: return false
+        if (!action.canStart(actor)) return false
+        if (current === action) return true
+        finishCurrent()
+        current = action
+        action.start(actor)
+        return true
+    }
+
+    /**
+     * Owner order. Skips canStart. Refuses if the current action's name is blocked
+     * (grave / death loot).
+     */
+    fun force(name: String, vararg blocked: String): Boolean {
+        val action = find(name) ?: return false
+        val running = current?.name()
+        if (running != null && blocked.any { it.equals(running, ignoreCase = true) }) {
+            return false
+        }
+        if (current === action) return true
+        finishCurrent()
+        current = action
+        action.start(actor)
+        return true
+    }
+
     fun debugLines(): List<String> {
         val lines = ArrayList<String>()
         lines.add(

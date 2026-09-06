@@ -79,6 +79,16 @@ class AmiliousMonkeyListener : InteractionListener {
             true
         }
 
+        on(ids, IntType.NPC, "bank") { player, node ->
+            val live = player.getAttribute<AmiliousMonkey?>(MonkeyConfig.ATTR_ACTIVE, null)
+            if (live == null || live !== node) {
+                sendMessage(player, "That is not your monkey.")
+                return@on true
+            }
+            live.orderBank()
+            true
+        }
+
         onUseWith(IntType.NPC, MonkeyConfig.BANANA_ID, *ids) { player, used, with ->
             useBanana(player, used.id, with)
         }

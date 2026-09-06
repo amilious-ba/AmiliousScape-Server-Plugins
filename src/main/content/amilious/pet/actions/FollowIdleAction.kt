@@ -8,7 +8,9 @@ import core.game.world.map.Location
 class FollowIdleAction(rank: Int = 10) :
     SimpleCompanionAction<AmiliousMonkey>("follow", rank) {
 
-    private var last: Location? = null
+    private var lastX = Int.MIN_VALUE
+    private var lastY = Int.MIN_VALUE
+    private var lastZ = Int.MIN_VALUE
     private var still = 0
 
     override fun getPhaseName() = "follow"
@@ -20,7 +22,7 @@ class FollowIdleAction(rank: Int = 10) :
 
     override fun start(actor: AmiliousMonkey) {
         super.start(actor)
-        last = actor.location
+        mark(actor.location)
         still = 0
         actor.followOwner()
     }
@@ -37,14 +39,16 @@ class FollowIdleAction(rank: Int = 10) :
         }
 
         val here = actor.location
-        if (last != null && here.x == last!!.x && here.y == last!!.y && here.z == last!!.z) {
+        if (here.x == lastX && here.y == lastY && here.z == lastZ) {
             still++
         } else {
             still = 0
-            last = here
+            mark(here)
         }
 
-        if (still >= 8) {
+        val blocked = still >= 5 ||
+                (!actor.walkingQueue.isMoving && !actor.pulseManager.hasPulseRunning())
+        if (dist > 3.0 && blocked) {
             actor.snapToOwner()
             return false
         }
@@ -55,10 +59,15 @@ class FollowIdleAction(rank: Int = 10) :
         return true
     }
 
+    private fun mark(loc: Location) {
+        lastX = loc.x
+        lastY = loc.y
+        lastZ = loc.z
+    }
+
     private fun stopFollow(actor: AmiliousMonkey) {
         actor.brain.path.stop(actor)
         actor.pulseManager.clear()
         still = 0
     }
-
 }

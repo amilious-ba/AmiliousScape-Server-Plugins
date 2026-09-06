@@ -99,9 +99,9 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         interaction.set(Option("Pack", 0))
         interaction.set(Option("Talk-to", 1))
         interaction.set(Option("Pet", 2))
-        interaction.set(Option("Empty", 3))
-        interaction.set(Option("Bank", 4))
-        interaction.set(Option("Dismiss", 5))
+        //interaction.set(Option("Empty", 3))
+        interaction.set(Option("Bank", 3))
+        interaction.set(Option("Dismiss", 4))
         refreshMenu()
     }
 
@@ -233,9 +233,9 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
             0 to "Pack",
             1 to "Talk-to",
             2 to "Pet",
-            3 to "Empty",
-            4 to "Bank",
-            5 to "Dismiss"
+            //3 to "Empty",
+            3 to "Bank",
+            4 to "Dismiss"
         )
         GigosHudPacket.send(owner, this)
     }

@@ -23,7 +23,7 @@ object MonkeyConfig {
     const val HUNGER_EAT_BELOW = 30   // auto-eat only when hunger is under this
     const val UNBURDEN_FREE = 4     //start taking when you have this many empty slots or fewer
     const val DRUNK_BEER = 50
-    const val HUNGER_BANK = 4
+    const val HUNGER_BANK = 25
     const val BANK_GONE_TICKS = 10
     const val BANK_AUTO_REST = 40
 

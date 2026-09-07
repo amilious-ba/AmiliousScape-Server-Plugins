@@ -6,6 +6,7 @@ import core.game.system.command.Privilege
 import core.game.system.command.sets.CommandSet
 import core.game.world.repository.Repository
 import core.plugin.Initializable
+import core.game.node.entity.skill.Skills
 
 /**
  * Starter Amilious command set. Add more define() blocks here.
@@ -115,6 +116,28 @@ class AmiliousCommandSet : CommandSet(Privilege.ADMIN) {
             }
             player.properties.teleportLocation = dest!!.location
             notify(player, "You run to Amilious.")
+        }
+
+        define(
+            "levels",
+            Privilege.ADMIN,
+            "::levels [player_name]",
+            "Print an online player's skill levels."
+        ) { player, args ->
+            val target = if (args.size >= 2) {
+                val name = args.drop(1).joinToString("_")
+                val found = Repository.getPlayerByName(name)
+                if (found == null) {
+                    reject(player, "Player not online: $name")
+                }
+                found!!
+            } else {
+                player
+            }
+            notify(player, "${target.username}  combat ${target.properties.currentCombatLevel}  total ${target.skills.totalLevel}")
+            for (i in 0 until Skills.SKILL_NAME.size) {
+                notify(player, "${Skills.SKILL_NAME[i]}  ${target.skills.getStaticLevel(i)}")
+            }
         }
 
     }

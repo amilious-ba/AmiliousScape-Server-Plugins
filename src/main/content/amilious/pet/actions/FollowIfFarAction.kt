@@ -17,7 +17,7 @@ class FollowIfFarAction(rank: Int = 100) :
     }
 
     override fun tick(actor: AmiliousMonkey): Boolean {
-        actor.snapToOwner()
+        actor.snapToOwner(true)
         rest(8)
         return false
     }

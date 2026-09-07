@@ -302,10 +302,12 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         return moved
     }
 
-    fun poofHere() {
+    fun poofHere(quiet: Boolean = false) {
         sendGraphics(MonkeyConfig.GFX_TELE, location)
         playAudio(owner, MonkeyConfig.SFX_TELEPORT)
-        playAudio(owner, MonkeyConfig.SFX_PLAYFUL)
+        if (!quiet) {
+            playAudio(owner, MonkeyConfig.SFX_PLAYFUL)
+        }
     }
 
     fun dismiss() {
@@ -371,7 +373,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         }
     }
 
-    fun snapToOwner() {
+    fun snapToOwner(silent: Boolean = false) {
         if (snapCool > 0) return
         if (location.getDistance(owner.location) <= 2.0 && location.z == owner.location.z) {
             isInvisible = false
@@ -391,7 +393,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         lastOwnerX = owner.location.x
         lastOwnerY = owner.location.y
         snapCool = 8
-        poofHere()
+        poofHere(quiet = silent)
     }
 
     private fun snapIfTeleported() {

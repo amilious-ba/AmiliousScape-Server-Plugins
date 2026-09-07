@@ -349,9 +349,15 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
             return
         }
         tickDrunk()
-        snapIfTeleported()
         noteOwnerIdle()
         tickCombatIdle()
+
+        if (ownerJumped()) {
+            snapToOwner()
+            GigosHudPacket.send(owner, this)
+            return
+        }
+
         brain.tick()
         val name = brain.getCurrentActionName()
         val phase = brain.getCurrentActionPhaseName()
@@ -363,10 +369,12 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     }
 
     fun snapToOwner() {
-        val from = location
-        sendGraphics(MonkeyConfig.GFX_TELE, from)
+        sendGraphics(MonkeyConfig.GFX_TELE, location)
         brain.interrupt()
-        brain.path.takeOver(this)
+        brain.path.stop(this)
+        pulseManager.clear()
+        walkingQueue.reset()
+        isInvisible = false
         val land = owner.location.transform(1, 0, 0)
         location = land
         properties.teleportLocation = land
@@ -393,6 +401,15 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         if (location.getDistance(here) > MonkeyConfig.FOLLOW_DIST) {
             followOwner()
         }
+    }
+
+    private fun ownerJumped(): Boolean {
+        val here = owner.location
+        if (lastOwnerX == Int.MIN_VALUE) return false
+        if (here.z != location.z) return true
+        val dx = kotlin.math.abs(here.x - location.x)
+        val dy = kotlin.math.abs(here.y - location.y)
+        return dx > 16 || dy > 16
     }
 
     fun saveBag() {

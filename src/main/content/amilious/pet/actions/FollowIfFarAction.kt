@@ -11,6 +11,7 @@ class FollowIfFarAction(rank: Int = 100) :
 
     override fun canStart(actor: AmiliousMonkey): Boolean {
         if (!ready()) return false
+        if (actor.snapCooling()) return false
         if (actor.location.z != actor.owner.location.z) return true
         return actor.location.getDistance(actor.owner.location) > MonkeyConfig.FOLLOW_DIST
     }

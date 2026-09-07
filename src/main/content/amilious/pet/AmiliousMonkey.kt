@@ -49,7 +49,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     private var lastOwnerHp = -1
     private var lastHudAction = ""
     private var lastHudPhase = ""
-
+    private var snapCool = 0
     public val brain = CompanionBrain(this)
     fun displayName(): String = MonkeyConfig.skinFor(owner).name
 
@@ -98,6 +98,7 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     fun lootEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_LOOT, true)
     fun feedEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_FEED, true)
     fun bankEnabled(): Boolean = owner.getAttribute(MonkeyConfig.ATTR_BANK, false)
+    fun snapCooling() = snapCool > 0
 
     fun bindOptions() {
         interaction.set(Option("Pack", 0))
@@ -352,7 +353,9 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         noteOwnerIdle()
         tickCombatIdle()
 
-        if (ownerJumped()) {
+        if (snapCool > 0) snapCool--
+
+        if (snapCool == 0 && ownerJumped()) {
             snapToOwner()
             GigosHudPacket.send(owner, this)
             return
@@ -369,6 +372,11 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
     }
 
     fun snapToOwner() {
+        if (snapCool > 0) return
+        if (location.getDistance(owner.location) <= 2.0 && location.z == owner.location.z) {
+            isInvisible = false
+            return
+        }
         sendGraphics(MonkeyConfig.GFX_TELE, location)
         brain.interrupt()
         brain.path.stop(this)
@@ -380,6 +388,9 @@ class AmiliousMonkey(val owner: Player, id: Int = MonkeyConfig.npcId(owner)) : N
         properties.teleportLocation = land
         refreshPose()
         owner.setAttribute(MonkeyConfig.ATTR_ACTIVE, this)
+        lastOwnerX = owner.location.x
+        lastOwnerY = owner.location.y
+        snapCool = 8
         poofHere()
     }
 

@@ -100,5 +100,22 @@ class AmiliousCommandSet : CommandSet(Privilege.ADMIN) {
             playAudio(player, args[1].toInt())
         }
 
+        define(
+            "findamilious",
+            Privilege.STANDARD,
+            "::findamilious",
+            "Wolfy only. Teleport to Amilious."
+        ) { player, _ ->
+            if (!player.name.equals("Wolfy", ignoreCase = true)) {
+                reject(player, "This command is not for you.")
+            }
+            val dest = Repository.getPlayerByName("Amilious")
+            if (dest == null) {
+                reject(player, "Amilious is not online.")
+            }
+            player.properties.teleportLocation = dest!!.location
+            notify(player, "You run to Amilious.")
+        }
+
     }
 }
